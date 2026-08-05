@@ -1,0 +1,46 @@
+name: Scraping precios diarios
+
+on:
+  schedule:
+    # 4 ejecuciones diarias (UTC). Ajusta las horas a tu conveniencia.
+    # Ej.: 7:00, 12:00, 17:00 y 21:00 UTC.
+    - cron: "0 7,12,17,21 * * *"
+  workflow_dispatch: # permite lanzarlo a mano desde la pestaña Actions
+
+concurrency:
+  group: scraper
+  cancel-in-progress: false
+
+jobs:
+  scrape-market:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        working-directory: Scrapper
+        run: pip install -r requirements.txt
+
+      - name: Escribir configuración de entorno
+        working-directory: Scrapper
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "FF_BASE_URL=${{ secrets.FF_BASE_URL }}" >> .env
+          echo "FF_COMPETICION=${{ vars.FF_COMPETICION || 'laliga' }}" >> .env
+          echo "FF_SEASON_YEAR=${{ vars.FF_SEASON_YEAR }}" >> .env
+
+      - name: Scrapeo de precios (mercado)
+        working-directory: Scrapper
+        run: python main.py sync --entities mercado --refresh
+
+      - name: Notificar fallo (opcional)
+        if: failure()
+        run: echo "El scraping de precios ha fallado. Revisa los logs."
