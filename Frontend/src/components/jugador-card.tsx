@@ -1,8 +1,10 @@
 import { Plus, Trash2, Lock } from "lucide-react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatValor } from "@/lib/format";
+import { JugadorDetalleSheet } from "@/components/jugador-detalle";
 
 export type CardJugador = {
   id: number;
@@ -14,6 +16,10 @@ export type CardJugador = {
   escudo: string | null;
   valor: number | null;
   tendencia: number | null;
+  estado?: string | null;
+  jerarquia?: string | null;
+  probabilidad?: number | null;
+  lesion?: string | null;
 };
 
 function Iniciales({ nombre }: { nombre: string }) {
@@ -52,6 +58,63 @@ function BloqueoBadge({ hasta }: { hasta: string | null }) {
   );
 }
 
+const ESTADOS_LEGIBLES: Record<string, { texto: string; clase: string }> = {
+  "1": { texto: "Titular", clase: "bg-emerald-600/90 text-white" },
+  "2": { texto: "Suplente", clase: "bg-sky-600/90 text-white" },
+  "3": { texto: "Sancionado", clase: "bg-amber-600/90 text-white" },
+  "4": { texto: "Lesionado", clase: "bg-red-600/90 text-white" },
+  "5": { texto: "Duda", clase: "bg-violet-600/90 text-white" },
+};
+
+const JERARQUIA_CORTA: Record<string, { texto: string; clase: string }> = {
+  Dios: { texto: "D", clase: "bg-amber-500/90 text-white" },
+  Clave: { texto: "C", clase: "bg-orange-500/90 text-white" },
+  Importante: { texto: "I", clase: "bg-violet-500/90 text-white" },
+  Rotacion: { texto: "R", clase: "bg-muted text-muted-foreground" },
+};
+
+export function TitularidadBadge({
+  estado,
+  jerarquia,
+  probabilidad,
+}: {
+  estado?: string | null;
+  jerarquia?: string | null;
+  probabilidad?: number | null;
+}) {
+  const e = estado != null ? ESTADOS_LEGIBLES[estado] : null;
+  const j = jerarquia != null ? JERARQUIA_CORTA[jerarquia] : null;
+  if (!e && !j && probabilidad == null) return null;
+  return (
+    <span className="flex items-center gap-1">
+      {e && (
+        <span
+          className={`rounded-full px-1.5 py-0 text-[10px] font-semibold shadow ${e.clase}`}
+          title={e.texto}
+        >
+          {e.texto}
+        </span>
+      )}
+      {j && (
+        <span
+          className={`rounded-full px-1.5 py-0 text-[10px] font-semibold shadow ${j.clase}`}
+          title={`Jerarquía: ${jerarquia}`}
+        >
+          {j.texto}
+        </span>
+      )}
+      {probabilidad != null && (
+        <span
+          className="rounded-full bg-black/40 px-1.5 py-0 text-[10px] font-semibold text-white"
+          title="Probabilidad de jugar"
+        >
+          {probabilidad}%
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function JugadorCard({
   jugador,
   onAdd,
@@ -68,61 +131,91 @@ export function JugadorCard({
   bloqueadoHasta?: string | null;
 }) {
   const { nombre, posicion, equipo, foto, escudo, valor, tendencia } = jugador;
+  const [detalleOpen, setDetalleOpen] = useState(false);
   return (
-    <div className="relative flex w-32 shrink-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition hover:shadow-md">
-      <div className="relative h-24 overflow-hidden bg-muted">
-        {foto ? (
-          <img src={foto} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Iniciales nombre={nombre} />
+    <>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setDetalleOpen(true)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setDetalleOpen(true);
+          }
+        }}
+        className="relative flex w-32 shrink-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        <div className="relative h-24 overflow-hidden bg-muted">
+          {foto ? (
+            <img src={foto} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <Iniciales nombre={nombre} />
+            </div>
+          )}
+          {escudo && (
+            <img
+              src={escudo}
+              alt=""
+              className="absolute left-1 top-1 size-7 rounded object-contain bg-white/90 p-0.5 ring-1 ring-border"
+            />
+          )}
+          <div className="absolute right-1 top-1">
+            <TendenciaBadge tendencia={tendencia} />
           </div>
-        )}
-        {escudo && (
-          <img
-            src={escudo}
-            alt=""
-            className="absolute left-1 top-1 size-7 rounded object-contain bg-white/90 p-0.5 ring-1 ring-border"
+          {bloqueado && <BloqueoBadge hasta={bloqueadoHasta ?? null} />}
+        </div>
+        <div className="flex flex-1 flex-col gap-1 p-2">
+          <span className="truncate text-sm font-semibold" title={nombre}>
+            {nombre}
+          </span>
+          <span className="truncate text-[11px] text-muted-foreground">
+            {posicion ?? "—"}
+            {equipo ? ` · ${equipo}` : ""}
+          </span>
+          <TitularidadBadge
+            estado={jugador.estado}
+            jerarquia={jugador.jerarquia}
+            probabilidad={jugador.probabilidad}
           />
-        )}
-        <div className="absolute right-1 top-1">
-          <TendenciaBadge tendencia={tendencia} />
-        </div>
-        {bloqueado && <BloqueoBadge hasta={bloqueadoHasta ?? null} />}
-      </div>
-      <div className="flex flex-1 flex-col gap-1 p-2">
-        <span className="truncate text-sm font-semibold" title={nombre}>
-          {nombre}
-        </span>
-        <span className="truncate text-[11px] text-muted-foreground">
-          {posicion ?? "—"}
-          {equipo ? ` · ${equipo}` : ""}
-        </span>
-        <div className="mt-auto flex items-center justify-between pt-1">
-          <span className="text-sm font-bold tabular-nums">{formatValor(valor)}</span>
-          {onAdd && (
-            <Button
-              size="icon-sm"
-              variant="secondary"
-              onClick={onAdd}
-              aria-label={`Añadir a ${nombre}`}
-            >
-              <Plus className="size-4" />
-            </Button>
-          )}
-          {onRemove && (
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              onClick={onRemove}
-              disabled={deshabilitado}
-              aria-label={`Quitar a ${nombre}`}
-            >
-              <Trash2 className="size-4 text-destructive" />
-            </Button>
-          )}
+          <div className="mt-auto flex items-center justify-between pt-1">
+            <span className="text-sm font-bold tabular-nums">{formatValor(valor)}</span>
+            {onAdd && (
+              <Button
+                size="icon-sm"
+                variant="secondary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdd();
+                }}
+                aria-label={`Añadir a ${nombre}`}
+              >
+                <Plus className="size-4" />
+              </Button>
+            )}
+            {onRemove && (
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove();
+                }}
+                disabled={deshabilitado}
+                aria-label={`Quitar a ${nombre}`}
+              >
+                <Trash2 className="size-4 text-destructive" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+      <JugadorDetalleSheet
+        jugador={jugador}
+        open={detalleOpen}
+        onOpenChange={setDetalleOpen}
+      />
+    </>
   );
 }

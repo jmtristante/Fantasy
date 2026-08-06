@@ -85,18 +85,32 @@ export default async function MercadoPage({
     nombre: string;
     posicion: string | null;
     foto_url: string;
+    estado?: string | null;
+    jerarquia?: string | null;
+    probabilidad?: number | null;
     equipos: { nombre: string; escudo_url: string } | { nombre: string; escudo_url: string }[] | null;
   }[] = [];
   if (ids.length > 0) {
     const jugQuery = await supabase
       .from("jugadores")
-      .select("jugador_id, nombre, posicion, foto_url, equipos(nombre, escudo_url)")
+      .select(
+        "jugador_id, nombre, posicion, foto_url, estado, jerarquia, probabilidad, equipos(nombre, escudo_url)",
+      )
       .in("jugador_id", ids);
     jugadores = (jugQuery.data ?? []) as typeof jugadores;
   }
   const infoJugador = new Map<
     number,
-    { nombre: string; posicion: string | null; foto: string | null; equipo: string | null; escudo: string | null }
+    {
+      nombre: string;
+      posicion: string | null;
+      foto: string | null;
+      equipo: string | null;
+      escudo: string | null;
+      estado?: string | null;
+      jerarquia?: string | null;
+      probabilidad?: number | null;
+    }
   >();
   for (const j of jugadores) {
     const e = j.equipos;
@@ -107,6 +121,9 @@ export default async function MercadoPage({
       foto: j.foto_url || null,
       equipo: eq?.nombre ?? null,
       escudo: (eq?.escudo_url as string | undefined) ?? null,
+      estado: j.estado ?? null,
+      jerarquia: j.jerarquia ?? null,
+      probabilidad: j.probabilidad ?? null,
     });
   }
 
@@ -133,6 +150,9 @@ export default async function MercadoPage({
       escudo: j?.escudo ?? null,
       valor: p?.valor ?? null,
       tendencia: p?.tendencia ?? null,
+      estado: j?.estado ?? null,
+      jerarquia: j?.jerarquia ?? null,
+      probabilidad: j?.probabilidad ?? null,
     };
   });
 

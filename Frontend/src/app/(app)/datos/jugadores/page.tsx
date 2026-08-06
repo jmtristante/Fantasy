@@ -9,7 +9,9 @@ export default async function JugadoresPage() {
 
   const { data: jugadores } = await supabase
     .from("jugadores")
-    .select("jugador_id, nombre, posicion, edad, foto_url, equipos(nombre, escudo_url)")
+    .select(
+      "jugador_id, nombre, posicion, edad, foto_url, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
+    )
     .order("nombre");
 
   const { data: precios } = await supabase
@@ -45,6 +47,10 @@ export default async function JugadoresPage() {
       foto: (j.foto_url as string) || null,
       valor: p?.valor ?? null,
       tendencia: p?.tendencia ?? null,
+      estado: (j.estado as string | null) ?? null,
+      jerarquia: (j.jerarquia as string | null) ?? null,
+      probabilidad: (j.probabilidad as number | null) ?? null,
+      lesion: (j.lesion as string | null) ?? null,
     };
   });
 

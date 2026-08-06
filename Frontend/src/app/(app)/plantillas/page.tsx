@@ -63,11 +63,16 @@ export default async function PlantillasPage() {
     .eq("liga_id", ligaId);
 
   const ids = (plantillaRaw ?? []).map((p) => p.jugador_id as number);
-  let fotos: Record<number, { foto: string | null; escudo: string | null }> = {};
+  let fotos: Record<
+    number,
+    { foto: string | null; escudo: string | null; estado: string | null; jerarquia: string | null; probabilidad: number | null }
+  > = {};
   if (ids.length > 0) {
     const { data: jug } = await supabase
       .from("jugadores")
-      .select("jugador_id, foto_url, equipos(escudo_url)")
+      .select(
+        "jugador_id, foto_url, estado, jerarquia, probabilidad, equipos(escudo_url)",
+      )
       .in("jugador_id", ids);
     const escudoPorId = new Map<number, string | undefined>();
     for (const j of jug ?? []) {
@@ -75,11 +80,14 @@ export default async function PlantillasPage() {
       const esc = Array.isArray(e) ? e[0] : e;
       escudoPorId.set(j.jugador_id as number, (esc?.escudo_url as string | undefined));
     }
-    fotos = (jug ?? []).reduce<Record<number, { foto: string | null; escudo: string | null }>>(
+    fotos = (jug ?? []).reduce<Record<number, { foto: string | null; escudo: string | null; estado: string | null; jerarquia: string | null; probabilidad: number | null }>>(
       (acc, j) => {
         acc[j.jugador_id as number] = {
           foto: (j.foto_url as string) || null,
           escudo: escudoPorId.get(j.jugador_id as number) ?? null,
+          estado: (j.estado as string | null) ?? null,
+          jerarquia: (j.jerarquia as string | null) ?? null,
+          probabilidad: (j.probabilidad as number | null) ?? null,
         };
         return acc;
       },
@@ -102,6 +110,9 @@ export default async function PlantillasPage() {
       tendencia: (p.tendencia as number | null) ?? null,
       bloqueado: Boolean(p.bloqueado),
       bloqueadoHasta: (p.bloqueado_hasta as string | null) ?? null,
+      estado: f?.estado ?? null,
+      jerarquia: f?.jerarquia ?? null,
+      probabilidad: f?.probabilidad ?? null,
     };
   });
 

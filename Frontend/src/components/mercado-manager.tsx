@@ -58,7 +58,9 @@ export function MercadoManager({
       const [jugadores, precios] = await Promise.all([
         supabase
           .from("jugadores")
-          .select("jugador_id, nombre, posicion, foto_url, equipos(nombre, escudo_url)")
+          .select(
+            "jugador_id, nombre, posicion, foto_url, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
+          )
           .order("nombre"),
         supabase.from("v_precio_actual").select("jugador_id, valor, tendencia"),
       ]);
@@ -86,6 +88,10 @@ export function MercadoManager({
           escudo: (e?.escudo_url as string | undefined) ?? null,
           valor: p?.valor ?? null,
           tendencia: p?.tendencia ?? null,
+          estado: (j.estado as string | null) ?? null,
+          jerarquia: (j.jerarquia as string | null) ?? null,
+          probabilidad: (j.probabilidad as number | null) ?? null,
+          lesion: (j.lesion as string | null) ?? null,
         };
       });
       setCatalogo(catalog);

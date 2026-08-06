@@ -1,5 +1,4 @@
 import argparse
-import re
 import sys
 from datetime import datetime, timezone
 
@@ -37,26 +36,6 @@ def _selected(entities):
     if "all" in entities:
         return set(ENTITIES)
     return {e.strip() for e in entities.split(",") if e.strip()} & ENTITIES
-
-
-def _slugify(nombre):
-    slug = re.sub(r"[^a-z0-9]+", "-", (nombre or "").lower()).strip("-")
-    return slug or "equipo"
-
-
-def _minimal_jugadores(precios):
-    jugadores = {}
-    for p in precios:
-        if p["jugador_id"] in jugadores:
-            continue
-        jugadores[p["jugador_id"]] = {
-            "jugador_id": p["jugador_id"],
-            "slug": "",
-            "nombre": p.get("jugador_nombre") or "",
-            "posicion": p.get("posicion"),
-            "equipo_id": p.get("equipo_id"),
-        }
-    return list(jugadores.values())
 
 
 def _precios_multi_juego(jugadores):
@@ -136,21 +115,12 @@ def cmd_sync(conn, args):
     if "mercado" in selected:
         precios = mercado.scrape(refresh=args.refresh)
         print(f"Mercado {COMPETICION}-fantasy: {len(precios)} precios")
-        if conn is not None:
-            cur = conn.cursor()
-            mercado_equipos = {}
-            for p in precios:
-                if p.get("equipo_id") and p.get("equipo_nombre"):
-                    mercado_equipos.setdefault(p["equipo_id"], p["equipo_nombre"])
-            sync_db.sync_equipos_minimal(
-                cur,
-                [
-                    {"equipo_id": eid, "nombre": nombre, "slug": _slugify(nombre)}
-                    for eid, nombre in mercado_equipos.items()
-                ],
-                SEASON_LABEL,
-            )
-            sync_db.sync_jugadores(cur, _minimal_jugadores(precios))
+        # El mercado solo aporta precios (se escriben al final). Los jugadores
+        # (y su detalle) se crean y actualizan exclusivamente con el scraper de
+        # equipos, para que un scrape de mercado nunca pise ni vacíe los datos.
+        # Nota: como precios_diarios.jugador_id tiene FK a jugadores, si un jugador
+        # del mercado aún no existe (recién fichado sin scrapear su equipo) su
+        # precio fallaría el INSERT y abortaría el sync de mercado.
 
     if "equipos" in selected:
         if not equipos:

@@ -102,20 +102,20 @@ def sync_jugadores(cur, jugadores):
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (jugador_id) DO UPDATE SET
-              nombre = EXCLUDED.nombre,
-              slug = EXCLUDED.slug,
-              posicion = EXCLUDED.posicion,
-              posiciones_juego = EXCLUDED.posiciones_juego,
-              edad = EXCLUDED.edad,
-              nacionalidad = EXCLUDED.nacionalidad,
-              pie = EXCLUDED.pie,
-              altura = EXCLUDED.altura,
-              foto_url = EXCLUDED.foto_url,
-              jerarquia = EXCLUDED.jerarquia,
-              lesion = EXCLUDED.lesion,
-              estado = EXCLUDED.estado,
-              probabilidad = EXCLUDED.probabilidad,
-              equipo_id = EXCLUDED.equipo_id
+              nombre = COALESCE(NULLIF(EXCLUDED.nombre, ''), jugadores.nombre),
+              slug = COALESCE(NULLIF(EXCLUDED.slug, ''), jugadores.slug),
+              posicion = COALESCE(NULLIF(EXCLUDED.posicion, ''), jugadores.posicion),
+              posiciones_juego = COALESCE(EXCLUDED.posiciones_juego, jugadores.posiciones_juego),
+              edad = COALESCE(EXCLUDED.edad, jugadores.edad),
+              nacionalidad = COALESCE(NULLIF(EXCLUDED.nacionalidad, ''), jugadores.nacionalidad),
+              pie = COALESCE(NULLIF(EXCLUDED.pie, ''), jugadores.pie),
+              altura = COALESCE(EXCLUDED.altura, jugadores.altura),
+              foto_url = COALESCE(NULLIF(EXCLUDED.foto_url, ''), jugadores.foto_url),
+              jerarquia = COALESCE(NULLIF(EXCLUDED.jerarquia, ''), jugadores.jerarquia),
+              lesion = COALESCE(NULLIF(EXCLUDED.lesion, ''), jugadores.lesion),
+              estado = COALESCE(NULLIF(EXCLUDED.estado, ''), jugadores.estado),
+              probabilidad = COALESCE(EXCLUDED.probabilidad, jugadores.probabilidad),
+              equipo_id = COALESCE(EXCLUDED.equipo_id, jugadores.equipo_id)
             """,
             (
                 jugador["jugador_id"],
