@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -27,20 +26,38 @@ export default async function CalendarioPage({
   const { data: partidos } = await supabase
     .from("partidos")
     .select(
-      "partido_id, fecha, canal, resultado_local, resultado_visitante, local:equipos!local_id(nombre), visitante:equipos!visitante_id(nombre)",
+      "partido_id, fecha, canal, resultado_local, resultado_visitante, local:equipos!local_id(nombre, escudo_url), visitante:equipos!visitante_id(nombre, escudo_url)",
     )
     .eq("jornada_id", actual?.id)
     .order("fecha");
 
+  type Equipo = { nombre: string; escudo_url: string | null } | null;
   type Partido = {
     partido_id: number;
     fecha: string | null;
     canal: string | null;
     resultado_local: number | null;
     resultado_visitante: number | null;
-    local: { nombre: string } | null;
-    visitante: { nombre: string } | null;
+    local: Equipo;
+    visitante: Equipo;
   };
+  const lista: Partido[] = (partidos as Partido[] | null) ?? [];
+
+  const jugado = (p: Partido) =>
+    p.resultado_local != null && p.resultado_visitante != null;
+
+  const Escudo = ({ equipo, nombre }: { equipo: Equipo; nombre: string }) =>
+    equipo?.escudo_url ? (
+      <img
+        src={equipo.escudo_url}
+        alt={equipo.nombre}
+        className="size-12 shrink-0 rounded-md object-contain bg-white p-0.5 ring-1 ring-border"
+      />
+    ) : (
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border bg-muted text-xs font-semibold text-muted-foreground">
+        {nombre.slice(0, 2).toUpperCase()}
+      </div>
+    );
 
   return (
     <div className="flex flex-col gap-4">
@@ -66,34 +83,53 @@ export default async function CalendarioPage({
         ))}
       </div>
 
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Local</TableHead>
-              <TableHead className="w-16 text-center">Resultado</TableHead>
-              <TableHead>Visitante</TableHead>
-              <TableHead className="text-right">Canal</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(partidos as Partido[] | null)?.map((p) => (
-              <TableRow key={p.partido_id}>
-                <TableCell>{formatDate(p.fecha)}</TableCell>
-                <TableCell>{p.local?.nombre ?? "—"}</TableCell>
-                <TableCell className="text-center font-bold tabular-nums">
-                  {p.resultado_local != null && p.resultado_visitante != null
-                    ? `${p.resultado_local} - ${p.resultado_visitante}`
-                    : "vs"}
-                </TableCell>
-                <TableCell>{p.visitante?.nombre ?? "—"}</TableCell>
-                <TableCell className="text-right text-muted-foreground">{p.canal ?? "—"}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      {lista.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No hay partidos disponibles para esta jornada.
+        </p>
+      ) : (
+<div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+          {lista.map((p) => (
+            <div
+              key={p.partido_id}
+              className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm"
+            >
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{formatDate(p.fecha)}</span>
+                {p.canal && <span>{p.canal}</span>}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Escudo equipo={p.local} nombre="LOC" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {p.local?.nombre ?? "—"}
+                  </p>
+                </div>
+                <span className="text-lg font-bold tabular-nums">
+                  {p.resultado_local ?? "–"}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Escudo equipo={p.visitante} nombre="VIS" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {p.visitante?.nombre ?? "—"}
+                  </p>
+                </div>
+                <span className="text-lg font-bold tabular-nums">
+                  {p.resultado_visitante ?? "–"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center rounded-md border border-dashed py-1 text-[11px] text-muted-foreground">
+                {jugado(p) ? "Finalizado" : "Próximo partido"}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
