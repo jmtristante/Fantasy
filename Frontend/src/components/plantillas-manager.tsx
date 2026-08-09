@@ -22,6 +22,7 @@ type EntradaPlantilla = {
   equipo: string | null;
   foto: string | null;
   escudo: string | null;
+  valor: number | null;
   clausula: number | null;
   tendencia: number | null;
   bloqueado: boolean;
@@ -173,6 +174,7 @@ export function PlantillasManager({
         equipo: c.equipo,
         foto: c.foto,
         escudo: c.escudo,
+        valor: c.valor,
         clausula: clausula,
         tendencia: c.tendencia,
         bloqueado: false,
@@ -345,7 +347,8 @@ export function PlantillasManager({
                     equipo: e.equipo,
                     foto: e.foto,
                     escudo: e.escudo,
-                    valor: e.clausula,
+                    valor: e.valor,
+                    clausula: e.clausula,
                     tendencia: e.tendencia,
                     estado: e.estado,
                     jerarquia: e.jerarquia,

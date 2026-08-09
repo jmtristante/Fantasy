@@ -20,6 +20,7 @@ export type CardJugador = {
   jerarquia?: string | null;
   probabilidad?: number | null;
   lesion?: string | null;
+  clausula?: number | null;
 };
 
 function Iniciales({ nombre }: { nombre: string }) {
@@ -179,35 +180,51 @@ export function JugadorCard({
             jerarquia={jugador.jerarquia}
             probabilidad={jugador.probabilidad}
           />
-          <div className="mt-auto flex items-center justify-between pt-1">
-            <span className="text-sm font-bold tabular-nums">{formatValor(valor)}</span>
-            {onAdd && (
-              <Button
-                size="icon-sm"
-                variant="secondary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAdd();
-                }}
-                aria-label={`Añadir a ${nombre}`}
-              >
-                <Plus className="size-4" />
-              </Button>
-            )}
-            {onRemove && (
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemove();
-                }}
-                disabled={deshabilitado}
-                aria-label={`Quitar a ${nombre}`}
-              >
-                <Trash2 className="size-4 text-destructive" />
-              </Button>
-            )}
+          <div className="mt-auto flex flex-col gap-0.5">
+            <div className="flex items-center justify-between">
+              {jugador.clausula != null ? (
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold tabular-nums">
+                    {formatValor(valor)}
+                  </span>
+                  <span
+                    className="text-[10px] tabular-nums text-muted-foreground"
+                    title="Valor de cláusula"
+                  >
+                    Cláusula: {formatValor(jugador.clausula)}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-sm font-bold tabular-nums">{formatValor(valor)}</span>
+              )}
+              {onAdd && (
+                <Button
+                  size="icon-sm"
+                  variant="secondary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAdd();
+                  }}
+                  aria-label={`Añadir a ${nombre}`}
+                >
+                  <Plus className="size-4" />
+                </Button>
+              )}
+              {onRemove && (
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove();
+                  }}
+                  disabled={deshabilitado}
+                  aria-label={`Quitar a ${nombre}`}
+                >
+                  <Trash2 className="size-4 text-destructive" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
