@@ -61,6 +61,49 @@ def _precios_multi_juego(jugadores):
     return precios
 
 
+def _ids_jugadores_existentes(conn, ids):
+    if not ids:
+        return set()
+    cur = conn.cursor()
+    cur.execute("SELECT jugador_id FROM jugadores WHERE jugador_id = ANY(%s)", (list(ids),))
+    return {row[0] for row in cur.fetchall()}
+
+
+def _procesa_mercado(conn, precios, refresh=False):
+    """Inserta los precios de mercado evitando el error de FK precios_diarios -> jugadores.
+
+    Si algún jugador del mercado aún no tiene ficha en `jugadores`, se scrapean
+    sus equipos con el scraper de equipos para crearlo/actualizarlo antes de
+    escribir los precios. Los que sigan sin resolverse se omiten con un aviso.
+    """
+    ids = {p["jugador_id"] for p in precios if p.get("jugador_id")}
+    existentes = _ids_jugadores_existentes(conn, ids)
+    faltantes = ids - existentes
+    if faltantes:
+        print(
+            f"Mercado: {len(faltantes)} jugadores sin ficha en `jugadores` "
+            f"(FK), scrapeando sus equipos para crearlos..."
+        )
+        equipos, _ = clasificacion.scrape(refresh=refresh)
+        if equipos:
+            for r in equipos_mod.scrape_all(equipos, refresh=refresh):
+                cur = conn.cursor()
+                sync_db.sync_equipos(cur, [r["equipo"]], SEASON_LABEL)
+                sync_db.sync_jugadores(cur, r["jugadores"])
+                sync_db.sync_precios(cur, _precios_multi_juego(r["jugadores"]))
+        else:
+            print("  Aviso: no se obtuvieron equipos para resolver el FK.")
+
+    existentes = _ids_jugadores_existentes(conn, ids)
+    faltantes = ids - existentes
+    pendientes = []
+    if faltantes:
+        pendientes = [p for p in precios if p.get("jugador_id") in faltantes]
+        print(f"AVISO: {len(pendientes)} jugadores del mercado quedan sin ficha y se omiten.")
+    validos = [p for p in precios if p.get("jugador_id") not in faltantes]
+    sync_db.sync_precios(conn.cursor(), validos)
+
+
 def cmd_setup(args):
     from db.connect import get_conn
 
@@ -147,7 +190,7 @@ def cmd_sync(conn, args):
     # Los precios del mercado (oficial, con tendencia/aceleracion) se escriben al
     # final para no ser pisados por los del scraper de equipos.
     if conn is not None and precios:
-        sync_db.sync_precios(conn.cursor(), precios)
+        _procesa_mercado(conn, precios, refresh=args.refresh)
 
     if conn is not None:
         conn.commit()
