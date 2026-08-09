@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { getSelectedLigaId } from "@/lib/liga";
+import { getSelectedLigaId, isAdmin } from "@/lib/liga";
 import {
   AlineacionesManager,
   type MiembroAlineaciones,
@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function AlineacionesPage() {
   const supabase = await createClient();
   const ligaId = await getSelectedLigaId();
+  const esAdmin = ligaId != null ? await isAdmin(ligaId) : false;
 
   if (ligaId == null) {
     return (
@@ -150,6 +151,7 @@ export default async function AlineacionesPage() {
 
       <AlineacionesManager
         ligaId={ligaId}
+        esAdmin={esAdmin}
         miembros={listaMiembros}
         jornadas={jornadas}
         jornadasPasadas={jornadasPasadas}

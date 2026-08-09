@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { getSelectedLigaId } from "@/lib/liga";
+import { getSelectedLigaId, isAdmin } from "@/lib/liga";
 import { getActiveMarketDate } from "@/lib/market";
 import { MercadoManager } from "@/components/mercado-manager";
 
@@ -18,6 +18,7 @@ export default async function MercadoPage({
 }) {
   const supabase = await createClient();
   const ligaId = await getSelectedLigaId();
+  const esAdmin = ligaId != null ? await isAdmin(ligaId) : false;
 
   if (ligaId == null) {
     return (
@@ -164,7 +165,7 @@ export default async function MercadoPage({
       activeDate={activeDate}
       selectedFecha={selectedFecha}
       fechas={fechas}
-      isEditable={selectedFecha === activeDate}
+      isEditable={esAdmin && selectedFecha === activeDate}
       iniciales={iniciales}
       debug={{
         ligaError: ligaError?.message ?? null,

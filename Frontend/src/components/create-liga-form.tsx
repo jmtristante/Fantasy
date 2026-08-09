@@ -56,6 +56,7 @@ export function CreateLigaForm() {
         presupuesto,
         descripcion: form.descripcion.trim() || null,
         mercado_reset_hora: form.horaReinicio || null,
+        creado_por: user?.email ?? null,
       })
       .select("id")
       .single();
@@ -76,6 +77,7 @@ export function CreateLigaForm() {
           nombre: form.tuNombre.trim(),
           email: user?.email ?? null,
           presupuesto_inicial: presupuesto,
+          es_admin: true,
         });
       if (errorMiembro) {
         toast.error(`La liga se creó, pero no se pudo añadirte como miembro: ${errorMiembro.message}`);

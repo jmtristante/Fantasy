@@ -5,10 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { getSelectedLigaId } from "@/lib/liga";
+import { getSelectedLigaId, isAdmin } from "@/lib/liga";
 import { formatValor } from "@/lib/format";
 import { CreateMiembroForm } from "@/components/create-miembro-form";
+import { EditMiembroButton } from "@/components/edit-miembro-button";
 import { DeleteMiembroButton } from "@/components/delete-miembro-button";
+import { MiembroAvatar } from "@/components/miembro-avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +18,11 @@ type MiembroRow = {
   miembro_id: number;
   nombre: string;
   email: string | null;
+  foto_url: string | null;
   saldo: number | null;
   n_jugadores: number | null;
+  valor_mercado_plantilla: number | null;
+  total_neto: number | null;
 };
 
 export default async function MiembrosPage({
@@ -27,6 +32,7 @@ export default async function MiembrosPage({
 }) {
   const supabase = await createClient();
   const ligaId = await getSelectedLigaId();
+  const esAdmin = ligaId != null ? await isAdmin(ligaId) : false;
   const params = await searchParams;
   const mostrarForm = params.crear === "1";
 
@@ -67,9 +73,11 @@ export default async function MiembrosPage({
   const { data: miembros, error } = await supabase
     .schema("liga")
     .from("v_miembros_saldo")
-    .select("miembro_id, nombre, email, saldo, n_jugadores")
+    .select(
+      "miembro_id, nombre, email, foto_url, saldo, n_jugadores, valor_mercado_plantilla, total_neto",
+    )
     .eq("liga_id", ligaId)
-    .order("saldo", { ascending: false });
+    .order("total_neto", { ascending: false });
 
   if (error) {
     return (
@@ -91,8 +99,11 @@ export default async function MiembrosPage({
     miembro_id: m.miembro_id as number,
     nombre: m.nombre as string,
     email: (m.email as string | null) ?? null,
+    foto_url: (m.foto_url as string | null) ?? null,
     saldo: (m.saldo as number | null) ?? null,
     n_jugadores: (m.n_jugadores as number | null) ?? null,
+    valor_mercado_plantilla: (m.valor_mercado_plantilla as number | null) ?? null,
+    total_neto: (m.total_neto as number | null) ?? null,
   }));
 
   return (
@@ -106,18 +117,20 @@ export default async function MiembrosPage({
         </p>
       </div>
 
-      {mostrarForm && <CreateMiembroForm ligaId={ligaId} presupuestoInicial={liga?.presupuesto ?? 0} />}
+      {esAdmin && mostrarForm && <CreateMiembroForm ligaId={ligaId} presupuestoInicial={liga?.presupuesto ?? 0} />}
 
-      <div className="flex flex-wrap gap-2">
-        <Link href="/miembros?crear=1" className={buttonVariants({ size: "sm" })}>
-          + Añadir miembro
-        </Link>
-        {mostrarForm && (
-          <Link href="/miembros" className={buttonVariants({ size: "sm", variant: "outline" })}>
-            Cancelar
+      {esAdmin && (
+        <div className="flex flex-wrap gap-2">
+          <Link href="/miembros?crear=1" className={buttonVariants({ size: "sm" })}>
+            + Añadir miembro
           </Link>
-        )}
-      </div>
+          {mostrarForm && (
+            <Link href="/miembros" className={buttonVariants({ size: "sm", variant: "outline" })}>
+              Cancelar
+            </Link>
+          )}
+        </div>
+      )}
 
       <div className="rounded-lg border">
         <Table>
@@ -126,17 +139,30 @@ export default async function MiembrosPage({
               <TableHead>Nombre</TableHead>
               <TableHead>Email</TableHead>
               <TableHead className="text-right">Saldo</TableHead>
+              <TableHead className="text-right">Valoración</TableHead>
+              <TableHead className="text-right">Total neto</TableHead>
               <TableHead className="text-right">Jugadores</TableHead>
-              <TableHead className="w-10"></TableHead>
+              {esAdmin && <TableHead className="w-16"></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filas.map((m) => (
               <TableRow key={m.miembro_id}>
-                <TableCell className="font-medium">{m.nombre}</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2.5">
+                    <MiembroAvatar nombre={m.nombre} fotoUrl={m.foto_url} />
+                    {m.nombre}
+                  </div>
+                </TableCell>
                 <TableCell className="text-muted-foreground">{m.email ?? "—"}</TableCell>
                 <TableCell className="text-right tabular-nums font-medium">
                   {formatValor(m.saldo)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {formatValor(m.valor_mercado_plantilla)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums font-bold">
+                  {formatValor(m.total_neto)}
                 </TableCell>
                 <TableCell className="text-right">
                   {m.n_jugadores ? (
@@ -145,18 +171,31 @@ export default async function MiembrosPage({
                     "—"
                   )}
                 </TableCell>
-                <TableCell>
-                  <DeleteMiembroButton
-                    id={m.miembro_id}
-                    nombre={m.nombre}
-                    nJugadores={m.n_jugadores ?? undefined}
-                  />
-                </TableCell>
+                {esAdmin && (
+                  <TableCell>
+                    <div className="flex items-center">
+                      <EditMiembroButton
+                        id={m.miembro_id}
+                        nombre={m.nombre}
+                        email={m.email}
+                        fotoUrl={m.foto_url}
+                      />
+                      <DeleteMiembroButton
+                        id={m.miembro_id}
+                        nombre={m.nombre}
+                        nJugadores={m.n_jugadores ?? undefined}
+                      />
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
             {filas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={esAdmin ? 7 : 6}
+                  className="py-8 text-center text-muted-foreground"
+                >
                   Todavía no hay miembros. Añade a tus amigos.
                 </TableCell>
               </TableRow>

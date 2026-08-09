@@ -26,7 +26,7 @@ export function CreateMiembroForm({
 }) {
   const router = useRouter();
   const [cargando, setCargando] = useState(false);
-  const [form, setForm] = useState({ nombre: "", email: "" });
+  const [form, setForm] = useState({ nombre: "", email: "", foto_url: "" });
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +40,7 @@ export function CreateMiembroForm({
       liga_id: ligaId,
       nombre: form.nombre.trim(),
       email: form.email.trim() || null,
+      foto_url: form.foto_url.trim() || null,
       presupuesto_inicial: presupuestoInicial,
     });
     setCargando(false);
@@ -48,7 +49,7 @@ export function CreateMiembroForm({
       return;
     }
     toast.success("Miembro añadido a la liga");
-    setForm({ nombre: "", email: "" });
+    setForm({ nombre: "", email: "", foto_url: "" });
     router.refresh();
   }
 
@@ -83,6 +84,19 @@ export function CreateMiembroForm({
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="Opcional"
               />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="foto_url">Foto (URL)</Label>
+              <Input
+                id="foto_url"
+                type="url"
+                value={form.foto_url}
+                onChange={(e) => setForm({ ...form, foto_url: e.target.value })}
+                placeholder="https://..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Aparecerá como avatar en el historial de movimientos.
+              </p>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">

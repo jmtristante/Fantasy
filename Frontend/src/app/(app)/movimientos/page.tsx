@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { getSelectedLigaId } from "@/lib/liga";
+import { getSelectedLigaId, isAdmin } from "@/lib/liga";
 import { MovimientosManager } from "@/components/movimientos-manager";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function MovimientosPage() {
   const supabase = await createClient();
   const ligaId = await getSelectedLigaId();
+  const esAdmin = ligaId != null ? await isAdmin(ligaId) : false;
 
   if (ligaId == null) {
     return (
@@ -49,7 +50,7 @@ export default async function MovimientosPage() {
   const { data: miembros } = await supabase
     .schema("liga")
     .from("miembros")
-    .select("id, nombre")
+    .select("id, nombre, foto_url")
     .eq("liga_id", ligaId)
     .order("nombre");
 
@@ -68,14 +69,21 @@ export default async function MovimientosPage() {
   const { data: historialRaw } = await supabase
     .schema("liga")
     .from("v_movimientos_detalle")
-    .select("id, fecha, tipo, miembro, contraparte, jugador, importe, nota")
+    .select(
+      "id, fecha, tipo, miembro_id, miembro, miembro_foto, contraparte_id, contraparte, contraparte_foto, jugador_id, jugador, jugador_foto, jugador_escudo, importe, nota",
+    )
     .eq("liga_id", ligaId);
 
   return (
     <MovimientosManager
       ligaId={ligaId}
       ligaNombre={liga?.nombre ?? "tu liga"}
-      miembros={(miembros ?? []).map((m) => ({ id: m.id as number, nombre: m.nombre as string }))}
+      esAdmin={esAdmin}
+      miembros={(miembros ?? []).map((m) => ({
+        id: m.id as number,
+        nombre: m.nombre as string,
+        foto: (m.foto_url as string | null) ?? null,
+      }))}
       libres={(libres ?? []).map((l) => ({
         jugador_id: l.jugador_id as number,
         nombre: l.jugador as string,
@@ -93,9 +101,16 @@ export default async function MovimientosPage() {
         id: h.id as number,
         fecha: (h.fecha as string) ?? "",
         tipo: h.tipo as string,
+        miembro_id: (h.miembro_id as number) ?? null,
         miembro: (h.miembro as string) ?? "",
+        miembro_foto: (h.miembro_foto as string | null) ?? null,
+        contraparte_id: (h.contraparte_id as number | null) ?? null,
         contraparte: (h.contraparte as string | null) ?? null,
+        contraparte_foto: (h.contraparte_foto as string | null) ?? null,
+        jugador_id: (h.jugador_id as number | null) ?? null,
         jugador: (h.jugador as string | null) ?? null,
+        jugador_foto: (h.jugador_foto as string | null) ?? null,
+        jugador_escudo: (h.jugador_escudo as string | null) ?? null,
         importe: (h.importe as number) ?? 0,
         nota: (h.nota as string | null) ?? null,
       }))}

@@ -35,12 +35,14 @@ export function PlantillasManager({
   ligaId,
   ligaNombre,
   plantillaCerrada,
+  esAdmin,
   miembros,
   iniciales,
 }: {
   ligaId: number;
   ligaNombre: string;
   plantillaCerrada: boolean;
+  esAdmin: boolean;
   miembros: { id: number; nombre: string }[];
   iniciales: EntradaPlantilla[];
 }) {
@@ -253,7 +255,7 @@ export function PlantillasManager({
         <h1 className="text-2xl font-semibold tracking-tight">Plantillas</h1>
         <p className="text-muted-foreground">
           Plantilla inicial de cada miembro de <span className="font-medium text-foreground">{ligaNombre}</span>.
-          Tú asignas los jugadores y su cláusula al ficharlos.
+          {esAdmin && " Tú asignas los jugadores y su cláusula al ficharlos."}
         </p>
       </div>
 
@@ -272,28 +274,30 @@ export function PlantillasManager({
             </Button>
           );
         })}
-        <div className="ml-auto flex items-center gap-2">
-          {plantillaCerrada ? (
-            <Button size="sm" variant="outline" onClick={() => cambiarCerrada(false)}>
-              Reabrir plantilla inicial
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              onClick={() => {
-                if (
-                  confirm(
-                    "¿Cerrar la plantilla inicial? Después ya no podrás añadir ni quitar jugadores a mano.",
-                  )
-                ) {
-                  cambiarCerrada(true);
-                }
-              }}
-            >
-              Cerrar plantilla inicial
-            </Button>
-          )}
-        </div>
+        {esAdmin && (
+          <div className="ml-auto flex items-center gap-2">
+            {plantillaCerrada ? (
+              <Button size="sm" variant="outline" onClick={() => cambiarCerrada(false)}>
+                Reabrir plantilla inicial
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (
+                    confirm(
+                      "¿Cerrar la plantilla inicial? Después ya no podrás añadir ni quitar jugadores a mano.",
+                    )
+                  ) {
+                    cambiarCerrada(true);
+                  }
+                }}
+              >
+                Cerrar plantilla inicial
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {plantillaCerrada && (
@@ -314,7 +318,9 @@ export function PlantillasManager({
             Plantilla actual.{" "}
             {plantillaCerrada
               ? "Solo cambia con movimientos."
-              : "Puedes quitar jugadores mientras sea la inicial."}
+              : esAdmin
+                ? "Puedes quitar jugadores mientras sea la inicial."
+                : "Solo lectura."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -322,7 +328,9 @@ export function PlantillasManager({
             <p className="text-sm text-muted-foreground">
               {plantillaCerrada
                 ? "Este miembro no tiene jugadores."
-                : "Todavía no tiene jugadores. Asígnalos desde abajo."}
+                : esAdmin
+                  ? "Todavía no tiene jugadores. Asígnalos desde abajo."
+                  : "Este miembro no tiene jugadores."}
             </p>
           ) : (
             <div className="flex flex-wrap gap-3">
@@ -346,7 +354,7 @@ export function PlantillasManager({
                   bloqueado={e.bloqueado}
                   bloqueadoHasta={e.bloqueadoHasta}
                   deshabilitado={quitando === e.jugador_id}
-                  onRemove={plantillaCerrada ? undefined : () => quitar(e)}
+                  onRemove={esAdmin && !plantillaCerrada ? () => quitar(e) : undefined}
                 />
               ))}
             </div>
@@ -354,7 +362,7 @@ export function PlantillasManager({
         </CardContent>
       </Card>
 
-      {!plantillaCerrada && (
+      {!plantillaCerrada && esAdmin && (
         <Card>
           <CardHeader>
             <CardTitle>Añadir jugadores a la plantilla</CardTitle>

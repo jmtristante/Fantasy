@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+const LIGA_LOGO = "https://assets.laliga.com/assets/logos/LL_RGB_h_color/LL_RGB_h_color.png";
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const {
@@ -118,10 +120,19 @@ export default async function DashboardPage() {
                     key={liga.id}
                     className="flex items-center justify-between rounded-lg border p-3"
                   >
-                    <div>
-                      <div className="font-medium">{liga.nombre}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Temporada {liga.temporada ?? "—"}
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white ring-1 ring-border">
+                        <img
+                          src={LIGA_LOGO}
+                          alt="Logo LaLiga"
+                          className="size-full object-contain p-1"
+                        />
+                      </div>
+                      <div>
+                        <div className="font-medium">{liga.nombre}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Temporada {liga.temporada ?? "—"}
+                        </div>
                       </div>
                     </div>
                   </div>

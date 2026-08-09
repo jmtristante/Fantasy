@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Check, ChevronsUpDown, Plus, Trophy } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
 import { setSelectedLiga } from "@/lib/liga-actions";
+
+const LIGA_LOGO = "https://assets.laliga.com/assets/logos/LL_RGB_h_color/LL_RGB_h_color.png";
 
 type Liga = { id: number; nombre: string };
 
@@ -42,8 +44,8 @@ export function LigaSelector({
           />
         }
       >
-        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-          <Trophy className="size-4" />
+        <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-border">
+          <img src={LIGA_LOGO} alt="Logo LaLiga" className="size-full object-contain p-1" />
         </div>
         <div className="grid flex-1 text-left text-sm leading-tight">
           <span className="truncate font-semibold">

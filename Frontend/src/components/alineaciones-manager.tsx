@@ -39,6 +39,7 @@ const ROL_LISTA = ["Portero", "Defensa", "Mediocampista", "Delantero"];
 
 export function AlineacionesManager({
   ligaId,
+  esAdmin,
   miembros,
   jornadas,
   jornadasPasadas = new Set<number>(),
@@ -46,6 +47,7 @@ export function AlineacionesManager({
   alineaciones,
 }: {
   ligaId: number;
+  esAdmin: boolean;
   miembros: MiembroAlineaciones[];
   jornadas: number[];
   jornadasPasadas?: Set<number>;
@@ -98,6 +100,7 @@ export function AlineacionesManager({
   );
 
   function toggleJugador(jugador_id: number) {
+    if (!esAdmin) return;
     setSeleccion((prev) => {
       const next = new Set(prev);
       if (next.has(jugador_id)) next.delete(jugador_id);
@@ -225,6 +228,7 @@ export function AlineacionesManager({
         </div>
 
         <div className="flex justify-end">
+        {esAdmin && (
         <Button
           size="sm"
           onClick={guardar}
@@ -233,6 +237,7 @@ export function AlineacionesManager({
           {guardando && <Loader2 className="animate-spin" />}
           Guardar alineación
         </Button>
+        )}
         </div>
       </div>
 

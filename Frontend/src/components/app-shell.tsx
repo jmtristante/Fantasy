@@ -11,6 +11,7 @@ import {
   Shield,
   ArrowLeftRight,
   CalendarDays,
+  TrendingUp,
   LogOut,
   Database,
 } from "lucide-react";
@@ -62,6 +63,7 @@ const LIGA_NAV = [
   { href: "/mercado", label: "Mercado", icon: Store },
   { href: "/clausulables", label: "Clausulables", icon: Shield },
   { href: "/movimientos", label: "Movimientos", icon: ArrowLeftRight },
+  { href: "/rentabilidad", label: "Rentabilidad", icon: TrendingUp },
   { href: "/alineaciones", label: "Alineaciones", icon: CalendarDays },
 ];
 

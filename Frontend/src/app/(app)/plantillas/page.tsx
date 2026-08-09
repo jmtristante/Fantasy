@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { getSelectedLigaId } from "@/lib/liga";
+import { getSelectedLigaId, isAdmin } from "@/lib/liga";
 import { PlantillasManager } from "@/components/plantillas-manager";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function PlantillasPage() {
   const supabase = await createClient();
   const ligaId = await getSelectedLigaId();
+  const esAdmin = ligaId != null ? await isAdmin(ligaId) : false;
 
   if (ligaId == null) {
     return (
@@ -121,6 +122,7 @@ export default async function PlantillasPage() {
       ligaId={ligaId}
       ligaNombre={liga?.nombre ?? "tu liga"}
       plantillaCerrada={Boolean(liga?.plantilla_cerrada)}
+      esAdmin={esAdmin}
       miembros={(miembros ?? []).map((m) => ({ id: m.id as number, nombre: m.nombre as string }))}
       iniciales={iniciales}
     />
