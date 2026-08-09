@@ -65,20 +65,11 @@ export default async function MovimientosPage() {
     .select("miembro_id, miembro, jugador_id, jugador, clausula, valor_mercado")
     .eq("liga_id", ligaId);
 
-  const { data: saldosRaw } = await supabase
-    .schema("liga")
-    .from("v_miembros_saldo")
-    .select("miembro_id, saldo")
-    .eq("liga_id", ligaId);
-
   const { data: historialRaw } = await supabase
     .schema("liga")
     .from("v_movimientos_detalle")
     .select("id, fecha, tipo, miembro, contraparte, jugador, importe, nota")
     .eq("liga_id", ligaId);
-
-  const saldos: Record<number, number> = {};
-  for (const s of saldosRaw ?? []) saldos[s.miembro_id as number] = (s.saldo as number) ?? 0;
 
   return (
     <MovimientosManager
@@ -98,7 +89,6 @@ export default async function MovimientosPage() {
         clausula: (p.clausula as number | null) ?? null,
         valor_mercado: (p.valor_mercado as number | null) ?? null,
       }))}
-      saldos={saldos}
       historial={(historialRaw ?? []).map((h) => ({
         id: h.id as number,
         fecha: (h.fecha as string) ?? "",

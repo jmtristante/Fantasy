@@ -92,7 +92,6 @@ export function MovimientosManager({
   miembros,
   libres,
   plantilla,
-  saldos,
   historial,
 }: {
   ligaId: number;
@@ -107,7 +106,6 @@ export function MovimientosManager({
     clausula: number | null;
     valor_mercado: number | null;
   }[];
-  saldos: Record<number, number>;
   historial: {
     id: number;
     fecha: string;
@@ -189,12 +187,6 @@ export function MovimientosManager({
     const precioNum = Number(precio || (jugadorMercado.precio ?? 0));
     if (!Number.isFinite(precioNum) || precioNum < 0) {
       toast.error("Precio inválido");
-      return;
-    }
-    if (comprador !== LALIGA && precioNum > (saldos[comprador] ?? 0)) {
-      toast.error(
-        `Saldo insuficiente de ${miembros.find((m) => m.id === comprador)?.nombre ?? ""}`,
-      );
       return;
     }
     const buyerIs = comprador !== LALIGA;
@@ -324,10 +316,6 @@ export function MovimientosManager({
     const inv = Number(invertido);
     if (!Number.isFinite(inv) || inv <= 0) {
       toast.error("Importe a invertir inválido");
-      return;
-    }
-    if (blMiembro !== LALIGA && inv > (saldos[blMiembro] ?? 0)) {
-      toast.error("Saldo insuficiente para blindar");
       return;
     }
     const prev = jugadorBlindaje.clausula ?? 0;
