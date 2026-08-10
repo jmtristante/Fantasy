@@ -190,6 +190,7 @@ export function JugadorDetalleSheet({
   const [hayLiga, setHayLiga] = useState<boolean | null>(null);
   const [rangoPrecios, setRangoPrecios] = useState<"todo" | 30 | 10 | 5>("todo");
   const [nowMs] = useState(() => Date.now());
+  const [tabActiva, setTabActiva] = useState<"economica" | "datos">("economica");
 
   useEffect(() => {
     if (!open) return;
@@ -437,157 +438,177 @@ export function JugadorDetalleSheet({
             </div>
           </div>
 
-          <div className="md:grid md:grid-cols-2 md:items-start md:gap-4">
+          <div className="flex gap-1 rounded-lg border bg-muted p-1">
+            <Button
+              size="sm"
+              variant={tabActiva === "economica" ? "default" : "ghost"}
+              onClick={() => setTabActiva("economica")}
+            >
+              Económica
+            </Button>
+            <Button
+              size="sm"
+              variant={tabActiva === "datos" ? "default" : "ghost"}
+              onClick={() => setTabActiva("datos")}
+            >
+              Datos
+            </Button>
+          </div>
+
+          {tabActiva === "economica" ? (
             <div className="flex flex-col gap-4">
-          {precio && (
-            <div className="rounded-xl border bg-card p-3">
-              <p className="text-xs text-muted-foreground">Valor de mercado</p>
-              <p className="text-2xl font-bold tabular-nums">
-                {formatValor(precio.valor)}
-                <span className="ml-2 align-middle text-sm font-medium">€</span>
-              </p>
-              {precio.diferencia != null && (
-                <p
-                  className={`mt-1 text-sm font-semibold tabular-nums ${
-                    sube ? "text-emerald-600" : baja ? "text-red-600" : "text-muted-foreground"
-                  }`}
-                >
-                  {sube ? "▲" : baja ? "▼" : "±"} {formatValor(Math.abs(precio.diferencia))}
-                  {precio.diferencia_pct != null
-                    ? ` (${precio.diferencia_pct > 0 ? "+" : ""}${precio.diferencia_pct.toFixed(2)}%)`
-                    : ""}
-                </p>
-              )}
-              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-                {precio.valor_anterior != null && (
-                  <span>Ant.: {formatValor(precio.valor_anterior)}</span>
-                )}
-                {precio.aceleracion != null && <span>Aceleración: {precio.aceleracion}</span>}
-                {precio.fecha && (
-                  <span>Actualizado: {new Date(precio.fecha).toLocaleString("es-ES")}</span>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="rounded-xl border bg-card p-3">
-            <p className="mb-1 text-xs font-medium text-muted-foreground">Datos personales</p>
-            <Campo etiqueta="Edad" valor={d?.edad != null ? `${d.edad} años` : "—"} />
-            <Campo
-              etiqueta="Nacionalidad"
-              valor={d?.nacionalidad ? d.nacionalidad.toUpperCase() : "—"}
-            />
-            <Campo etiqueta="Pie" valor={d?.pie ? d.pie : "—"} />
-            <Campo etiqueta="Altura" valor={d?.altura != null ? `${(d.altura / 100).toFixed(2)} m` : "—"} />
-            <Campo etiqueta="Estado" valor={d?.estado ? (ESTADOS_LEGIBLES[d.estado] ?? d.estado) : "—"} />
-            {d?.probabilidad != null && (
-              <Campo etiqueta="Prob. de jugar" valor={`${d.probabilidad}%`} />
-            )}
-            {d?.posiciones_juego && (
-              <Campo
-                etiqueta="Posiciones"
-                valor={Object.values(d.posiciones_juego).find(Boolean) || "—"}
-              />
-            )}
-          </div>
-
-          </div>
-
-          <div className="flex flex-col gap-4">
-
-          {historialOrdenado.length ? (
-            <div className="rounded-xl border bg-card p-3">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Evolución del valor
-                </p>
-                <div className="flex gap-1">
-                  {RANGOS_PRECIOS.map((r) => (
-                    <Button
-                      key={r.valor}
-                      size="sm"
-                      variant={rangoPrecios === r.valor ? "secondary" : "ghost"}
-                      onClick={() => setRangoPrecios(r.valor)}
+              {precio && (
+                <div className="rounded-xl border bg-card p-3">
+                  <p className="text-xs text-muted-foreground">Valor de mercado</p>
+                  <p className="text-2xl font-bold tabular-nums">
+                    {formatValor(precio.valor)}
+                    <span className="ml-2 align-middle text-sm font-medium">€</span>
+                  </p>
+                  {precio.diferencia != null && (
+                    <p
+                      className={`mt-1 text-sm font-semibold tabular-nums ${
+                        sube ? "text-emerald-600" : baja ? "text-red-600" : "text-muted-foreground"
+                      }`}
                     >
-                      {r.etiqueta}
-                    </Button>
-                  ))}
+                      {sube ? "▲" : baja ? "▼" : "±"} {formatValor(Math.abs(precio.diferencia))}
+                      {precio.diferencia_pct != null
+                        ? ` (${precio.diferencia_pct > 0 ? "+" : ""}${precio.diferencia_pct.toFixed(2)}%)`
+                        : ""}
+                    </p>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                    {precio.valor_anterior != null && (
+                      <span>Ant.: {formatValor(precio.valor_anterior)}</span>
+                    )}
+                    {precio.tendencia != null && (
+                      <span>Tendencia: {precio.tendencia}</span>
+                    )}
+                    {precio.aceleracion != null && (
+                      <span>Aceleración: {formatValor(precio.aceleracion)}</span>
+                    )}
+                    {precio.fecha && (
+                      <span>Actualizado: {new Date(precio.fecha).toLocaleString("es-ES")}</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="h-56 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={historialFiltrado}
-                    margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-                  >
-                    <defs>
-                      <linearGradient id="fillValor" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.35} />
-                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                      tickLine={false}
-                      axisLine={false}
-                      minTickGap={20}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                      tickLine={false}
-                      axisLine={false}
-                      width={70}
-                      tickFormatter={formatEje}
-                      domain={["auto", "auto"]}
-                    />
-                    <Tooltip
-                      formatter={(v) => [formatValor(Number(v)), "Valor"]}
-                      labelFormatter={(l) => `Fecha: ${l}`}
-                      contentStyle={{
-                        background: "var(--popover)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="valor"
-                      stroke="var(--primary)"
-                      strokeWidth={2}
-                      fill="url(#fillValor)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          ) : null}
+              )}
 
-          {timeline.length ? (
-            <div className="rounded-xl border bg-card p-3">
-              <p className="mb-3 text-xs font-medium text-muted-foreground">
-                Timeline del jugador
-              </p>
-              <div className="relative flex flex-col gap-0">
-                <div className="absolute bottom-0 left-[7px] top-0 w-px bg-border" />
-                {timeline.map((e, i) => (
-                  <TimelineItem key={`${e.fecha}-${i}`} evento={e} />
-                ))}
-              </div>
+              {historialOrdenado.length ? (
+                <div className="rounded-xl border bg-card p-3">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Evolución del valor
+                    </p>
+                    <div className="flex gap-1">
+                      {RANGOS_PRECIOS.map((r) => (
+                        <Button
+                          key={r.valor}
+                          size="sm"
+                          variant={rangoPrecios === r.valor ? "secondary" : "ghost"}
+                          onClick={() => setRangoPrecios(r.valor)}
+                        >
+                          {r.etiqueta}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="h-56 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={historialFiltrado}
+                        margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                      >
+                        <defs>
+                          <linearGradient id="fillValor" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.35} />
+                            <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.02} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                        <XAxis
+                          dataKey="label"
+                          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                          tickLine={false}
+                          axisLine={false}
+                          minTickGap={20}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                          tickLine={false}
+                          axisLine={false}
+                          width={70}
+                          tickFormatter={formatEje}
+                          domain={["auto", "auto"]}
+                        />
+                        <Tooltip
+                          formatter={(v) => [formatValor(Number(v)), "Valor"]}
+                          labelFormatter={(l) => `Fecha: ${l}`}
+                          contentStyle={{
+                            background: "var(--popover)",
+                            border: "1px solid var(--border)",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="valor"
+                          stroke="var(--primary)"
+                          strokeWidth={2}
+                          fill="url(#fillValor)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : (
-            <div className="rounded-xl border bg-card p-3">
-              <p className="text-xs text-muted-foreground">
-                {hayLiga === false
-                  ? "Selecciona una liga para ver el timeline del jugador."
-                  : "Sin movimientos registrados en tu liga."}
-              </p>
+            <div className="flex flex-col gap-4">
+              <div className="rounded-xl border bg-card p-3">
+                <p className="mb-1 text-xs font-medium text-muted-foreground">Datos personales</p>
+                <Campo etiqueta="Edad" valor={d?.edad != null ? `${d.edad} años` : "—"} />
+                <Campo
+                  etiqueta="Nacionalidad"
+                  valor={d?.nacionalidad ? d.nacionalidad.toUpperCase() : "—"}
+                />
+                <Campo etiqueta="Pie" valor={d?.pie ? d.pie : "—"} />
+                <Campo etiqueta="Altura" valor={d?.altura != null ? `${(d.altura / 100).toFixed(2)} m` : "—"} />
+                <Campo etiqueta="Estado" valor={d?.estado ? (ESTADOS_LEGIBLES[d.estado] ?? d.estado) : "—"} />
+                {d?.probabilidad != null && (
+                  <Campo etiqueta="Prob. de jugar" valor={`${d.probabilidad}%`} />
+                )}
+                {d?.posiciones_juego && (
+                  <Campo
+                    etiqueta="Posiciones"
+                    valor={Object.values(d.posiciones_juego).find(Boolean) || "—"}
+                  />
+                )}
+              </div>
+
+              {timeline.length ? (
+                <div className="rounded-xl border bg-card p-3">
+                  <p className="mb-3 text-xs font-medium text-muted-foreground">
+                    Timeline del jugador
+                  </p>
+                  <div className="relative flex flex-col gap-0">
+                    <div className="absolute bottom-0 left-[7px] top-0 w-px bg-border" />
+                    {timeline.map((e, i) => (
+                      <TimelineItem key={`${e.fecha}-${i}`} evento={e} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border bg-card p-3">
+                  <p className="text-xs text-muted-foreground">
+                    {hayLiga === false
+                      ? "Selecciona una liga para ver el timeline del jugador."
+                      : "Sin movimientos registrados en tu liga."}
+                  </p>
+                </div>
+              )}
             </div>
           )}
-          </div>
-        </div>
         </div>
       </SheetContent>
     </Sheet>
