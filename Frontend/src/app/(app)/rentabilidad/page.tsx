@@ -39,36 +39,35 @@ export default async function RentabilidadPage() {
     );
   }
 
-  const { data: miembros } = await supabase
-    .schema("liga")
-    .from("miembros")
-    .select("id, nombre, foto_url")
-    .eq("liga_id", ligaId)
-    .order("nombre");
-
-  const { data: movimientos } = await supabase
-    .schema("liga")
-    .from("movimientos")
-    .select("tipo, importe, miembro_id, jugador_id")
-    .eq("liga_id", ligaId)
-    .not("jugador_id", "is", null);
-
-  const { data: drafts } = await supabase
-    .schema("liga")
-    .from("clausulas_historial")
-    .select("miembro_id, jugador_id, valor")
-    .eq("liga_id", ligaId)
-    .eq("motivo", "draft_inicial");
-
-  const { data: plantillas } = await supabase
-    .schema("liga")
-    .from("plantillas")
-    .select("miembro_id, jugador_id")
-    .eq("liga_id", ligaId);
-
-  const { data: precios } = await supabase
-    .from("v_precio_actual")
-    .select("jugador_id, valor, tendencia, aceleracion_estado");
+  const [{ data: miembros }, { data: movimientos }, { data: drafts }, { data: plantillas }, { data: precios }] =
+    await Promise.all([
+      supabase
+        .schema("liga")
+        .from("miembros")
+        .select("id, nombre, foto_url")
+        .eq("liga_id", ligaId)
+        .order("nombre"),
+      supabase
+        .schema("liga")
+        .from("movimientos")
+        .select("tipo, importe, miembro_id, jugador_id")
+        .eq("liga_id", ligaId)
+        .not("jugador_id", "is", null),
+      supabase
+        .schema("liga")
+        .from("clausulas_historial")
+        .select("miembro_id, jugador_id, valor")
+        .eq("liga_id", ligaId)
+        .eq("motivo", "draft_inicial"),
+      supabase
+        .schema("liga")
+        .from("plantillas")
+        .select("miembro_id, jugador_id")
+        .eq("liga_id", ligaId),
+      supabase
+        .from("v_precio_actual")
+        .select("jugador_id, valor, tendencia, aceleracion_estado"),
+    ]);
 
   const valorPorJugador = new Map(
     (precios ?? []).map((p) => [p.jugador_id as number, p.valor as number | null]),

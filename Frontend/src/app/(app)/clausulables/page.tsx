@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { getSelectedLigaId } from "@/lib/liga";
+import { getCurrentUser } from "@/lib/auth-user";
 import {
   ClausulablesManager,
   type FilaRobo,
@@ -62,24 +63,22 @@ export default async function ClausulablesPage() {
     );
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const email = user?.email ?? null;
+  const email = (await getCurrentUser())?.email ?? null;
 
-  const { data: miembros } = await supabase
-    .schema("liga")
-    .from("v_miembros_saldo")
-    .select("miembro_id, nombre, email, foto_url, saldo")
-    .eq("liga_id", ligaId);
-
-  const { data: plantilla } = await supabase
-    .schema("liga")
-    .from("v_plantilla")
-    .select(
-      "miembro_id, miembro, jugador_id, jugador, posicion, equipo, clausula, valor_mercado, tendencia, bloqueado, bloqueado_hasta",
-    )
-    .eq("liga_id", ligaId);
+  const [{ data: miembros }, { data: plantilla }] = await Promise.all([
+    supabase
+      .schema("liga")
+      .from("v_miembros_saldo")
+      .select("miembro_id, nombre, email, foto_url, saldo")
+      .eq("liga_id", ligaId),
+    supabase
+      .schema("liga")
+      .from("v_plantilla")
+      .select(
+        "miembro_id, miembro, jugador_id, jugador, posicion, equipo, clausula, valor_mercado, tendencia, bloqueado, bloqueado_hasta",
+      )
+      .eq("liga_id", ligaId),
+  ]);
 
   const ids = [...new Set((plantilla ?? []).map((p) => p.jugador_id as number))];
 
@@ -87,11 +86,25 @@ export default async function ClausulablesPage() {
     number,
     { foto: string | null; escudo: string | null }
   >();
+  let diferenciaPct = new Map<number, number | null>();
+  let fechasRows: { fecha: string | number }[] = [];
   if (ids.length > 0) {
-    const { data: jugadores } = await supabase
-      .from("jugadores")
-      .select("jugador_id, foto_url, equipos(nombre, escudo_url)")
-      .in("jugador_id", ids);
+    const [{ data: jugadores }, { data: precios }, { data: fechasRaw }] =
+      await Promise.all([
+        supabase
+          .from("jugadores")
+          .select("jugador_id, foto_url, equipos(nombre, escudo_url)")
+          .in("jugador_id", ids),
+        supabase
+          .from("v_precio_actual")
+          .select("jugador_id, diferencia_pct")
+          .in("jugador_id", ids),
+        supabase
+          .from("precios_diarios")
+          .select("fecha")
+          .in("jugador_id", ids)
+          .order("fecha", { ascending: false }),
+      ]);
     jugadorInfo = new Map(
       (jugadores ?? []).map((j) => {
         const eq = j.equipos as
@@ -108,31 +121,18 @@ export default async function ClausulablesPage() {
         ];
       }),
     );
-  }
-
-  // Variación de hoy (mercado oficial).
-  let diferenciaPct = new Map<number, number | null>();
-  if (ids.length > 0) {
-    const { data: precios } = await supabase
-      .from("v_precio_actual")
-      .select("jugador_id, diferencia_pct")
-      .in("jugador_id", ids);
     diferenciaPct = new Map(
       (precios ?? []).map((p) => [
         p.jugador_id as number,
         p.diferencia_pct as number | null,
       ]),
     );
+    fechasRows = (fechasRaw ?? []) as { fecha: string | number }[];
   }
 
   // Apreciación en los últimos ~5 días cotizados (por día natural, no por timestamp).
   const aprec5d = new Map<number, { pct: number | null; dias: number }>();
-  if (ids.length > 0) {
-    const { data: fechasRows } = await supabase
-      .from("precios_diarios")
-      .select("fecha")
-      .in("jugador_id", ids)
-      .order("fecha", { ascending: false });
+  if (ids.length > 0 && fechasRows.length > 0) {
     const diasTop = [
       ...new Set(
         (fechasRows ?? []).map((f) =>

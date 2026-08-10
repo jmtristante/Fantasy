@@ -40,39 +40,33 @@ export default async function MovimientosPage() {
     );
   }
 
-  const { data: liga } = await supabase
-    .schema("liga")
-    .from("ligas")
-    .select("nombre")
-    .eq("id", ligaId)
-    .single();
-
-  const { data: miembros } = await supabase
-    .schema("liga")
-    .from("miembros")
-    .select("id, nombre, foto_url")
-    .eq("liga_id", ligaId)
-    .order("nombre");
-
-  const { data: libres } = await supabase
-    .schema("liga")
-    .from("v_mercado_actual")
-    .select("jugador_id, jugador, valor_mercado")
-    .eq("liga_id", ligaId);
-
-  const { data: plantilla } = await supabase
-    .schema("liga")
-    .from("v_plantilla")
-    .select("miembro_id, miembro, jugador_id, jugador, clausula, valor_mercado")
-    .eq("liga_id", ligaId);
-
-  const { data: historialRaw } = await supabase
-    .schema("liga")
-    .from("v_movimientos_detalle")
-    .select(
-      "id, fecha, tipo, miembro_id, miembro, miembro_foto, contraparte_id, contraparte, contraparte_foto, jugador_id, jugador, jugador_foto, jugador_escudo, importe, nota",
-    )
-    .eq("liga_id", ligaId);
+  const [{ data: liga }, { data: miembros }, { data: libres }, { data: plantilla }, { data: historialRaw }] =
+    await Promise.all([
+      supabase.schema("liga").from("ligas").select("nombre").eq("id", ligaId).single(),
+      supabase
+        .schema("liga")
+        .from("miembros")
+        .select("id, nombre, foto_url")
+        .eq("liga_id", ligaId)
+        .order("nombre"),
+      supabase
+        .schema("liga")
+        .from("v_mercado_actual")
+        .select("jugador_id, jugador, valor_mercado")
+        .eq("liga_id", ligaId),
+      supabase
+        .schema("liga")
+        .from("v_plantilla")
+        .select("miembro_id, miembro, jugador_id, jugador, clausula, valor_mercado")
+        .eq("liga_id", ligaId),
+      supabase
+        .schema("liga")
+        .from("v_movimientos_detalle")
+        .select(
+          "id, fecha, tipo, miembro_id, miembro, miembro_foto, contraparte_id, contraparte, contraparte_foto, jugador_id, jugador, jugador_foto, jugador_escudo, importe, nota",
+        )
+        .eq("liga_id", ligaId),
+    ]);
 
   return (
     <MovimientosManager

@@ -44,31 +44,45 @@ export default async function AlineacionesPage() {
     );
   }
 
-  // Miembros de la liga
-  const { data: miembros } = await supabase
-    .schema("liga")
-    .from("miembros")
-    .select("id, nombre")
-    .eq("liga_id", ligaId)
-    .order("nombre");
+  // Miembros, jornadas, partidos, alineaciones y plantilla de la liga (independientes).
+  const [
+    { data: miembros },
+    { data: jornadasRaw },
+    { data: partidos },
+    { data: alineacionesRaw },
+    { data: plantillaRaw },
+  ] = await Promise.all([
+    supabase
+      .schema("liga")
+      .from("miembros")
+      .select("id, nombre")
+      .eq("liga_id", ligaId)
+      .order("nombre"),
+    supabase.from("jornadas").select("numero").order("numero"),
+    supabase
+      .from("partidos")
+      .select("jornada:jornadas(numero), resultado_local, resultado_visitante"),
+    supabase
+      .schema("liga")
+      .from("liga_alineaciones")
+      .select("miembro_id, jugador_id, jornada")
+      .eq("liga_id", ligaId),
+    supabase
+      .schema("liga")
+      .from("v_plantilla")
+      .select("miembro_id, jugador_id, jugador, posicion, equipo, clausula")
+      .eq("liga_id", ligaId),
+  ]);
+
   const listaMiembros: MiembroAlineaciones[] = (miembros ?? []).map((m) => ({
     id: m.id as number,
     nombre: m.nombre as string,
   }));
 
-  // Jornadas disponibles (números, ascendentes)
-  const { data: jornadasRaw } = await supabase
-    .from("jornadas")
-    .select("numero")
-    .order("numero");
   const jornadas = Array.from(new Set((jornadasRaw ?? []).map((j) => j.numero as number))).sort(
     (a, b) => a - b,
   );
 
-  // Jornadas ya jugadas: aquellas en las que todos sus partidos tienen resultado
-  const { data: partidos } = await supabase
-    .from("partidos")
-    .select("jornada:jornadas(numero), resultado_local, resultado_visitante");
   const partidosPorJornada = new Map<number, { total: number; conResultado: number }>();
   for (const p of partidos ?? []) {
     const num =
@@ -85,24 +99,11 @@ export default async function AlineacionesPage() {
       .map(([num]) => num),
   );
 
-  // Alineaciones ya guardadas de la liga
-  const { data: alineacionesRaw } = await supabase
-    .schema("liga")
-    .from("liga_alineaciones")
-    .select("miembro_id, jugador_id, jornada")
-    .eq("liga_id", ligaId);
   const alineaciones = (alineacionesRaw ?? []).map((a) => ({
     miembro_id: a.miembro_id as number,
     jugador_id: a.jugador_id as number,
     jornada: a.jornada as number,
   }));
-
-  // Plantilla de cada miembro
-  const { data: plantillaRaw } = await supabase
-    .schema("liga")
-    .from("v_plantilla")
-    .select("miembro_id, jugador_id, jugador, posicion, equipo, clausula")
-    .eq("liga_id", ligaId);
 
   const ids = (plantillaRaw ?? []).map((p) => p.jugador_id as number);
   const fotos: Record<number, { foto: string | null; escudo: string | null }> = {};

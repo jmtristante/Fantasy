@@ -2,23 +2,26 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { getSelectedLigaId } from "@/lib/liga";
+import { getCurrentUser } from "@/lib/auth-user";
 import { AppShell } from "@/components/app-shell";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [user, ligas] = await Promise.all([
+    getCurrentUser(),
+    createClient()
+      .then((supabase) =>
+        supabase
+          .schema("liga")
+          .from("ligas")
+          .select("id, nombre")
+          .order("nombre"),
+      )
+      .then(({ data }) => data ?? []),
+  ]);
 
   if (!user) {
     redirect("/auth/login");
   }
-
-  const { data: ligas } = await supabase
-    .schema("liga")
-    .from("ligas")
-    .select("id, nombre")
-    .order("nombre");
 
   const selectedLigaId = await getSelectedLigaId();
 

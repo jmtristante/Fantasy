@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 
 import { createClient } from "@/lib/supabase/server";
 import { LIGA_COOKIE } from "@/lib/liga-consts";
+import { getCurrentUser } from "@/lib/auth-user";
 
 export async function getSelectedLigaId(): Promise<number | null> {
   const store = await cookies();
@@ -12,12 +13,10 @@ export async function getSelectedLigaId(): Promise<number | null> {
 }
 
 export async function isAdmin(ligaId: number): Promise<boolean> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user?.email || ligaId == null) return false;
 
+  const supabase = await createClient();
   const { data } = await supabase
     .schema("liga")
     .from("miembros")

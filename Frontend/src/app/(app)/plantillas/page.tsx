@@ -41,27 +41,27 @@ export default async function PlantillasPage() {
     );
   }
 
-  const { data: liga } = await supabase
-    .schema("liga")
-    .from("ligas")
-    .select("nombre, plantilla_cerrada")
-    .eq("id", ligaId)
-    .single();
-
-  const { data: miembros } = await supabase
-    .schema("liga")
-    .from("miembros")
-    .select("id, nombre")
-    .eq("liga_id", ligaId)
-    .order("nombre");
-
-  const { data: plantillaRaw } = await supabase
-    .schema("liga")
-    .from("v_plantilla")
-    .select(
-      "miembro_id, miembro, jugador_id, jugador, posicion, equipo, clausula, valor_mercado, tendencia, aceleracion_estado, bloqueado, bloqueado_hasta",
-    )
-    .eq("liga_id", ligaId);
+  const [{ data: liga }, { data: miembros }, { data: plantillaRaw }] = await Promise.all([
+    supabase
+      .schema("liga")
+      .from("ligas")
+      .select("nombre, plantilla_cerrada")
+      .eq("id", ligaId)
+      .single(),
+    supabase
+      .schema("liga")
+      .from("miembros")
+      .select("id, nombre")
+      .eq("liga_id", ligaId)
+      .order("nombre"),
+    supabase
+      .schema("liga")
+      .from("v_plantilla")
+      .select(
+        "miembro_id, miembro, jugador_id, jugador, posicion, equipo, clausula, valor_mercado, tendencia, aceleracion_estado, bloqueado, bloqueado_hasta",
+      )
+      .eq("liga_id", ligaId),
+  ]);
 
   const ids = (plantillaRaw ?? []).map((p) => p.jugador_id as number);
   let fotos: Record<

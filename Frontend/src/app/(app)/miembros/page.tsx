@@ -63,21 +63,22 @@ export default async function MiembrosPage({
     );
   }
 
-  const { data: liga } = await supabase
-    .schema("liga")
-    .from("ligas")
-    .select("id, nombre, presupuesto")
-    .eq("id", ligaId)
-    .single();
-
-  const { data: miembros, error } = await supabase
-    .schema("liga")
-    .from("v_miembros_saldo")
-    .select(
-      "miembro_id, nombre, email, foto_url, saldo, n_jugadores, valor_mercado_plantilla, total_neto",
-    )
-    .eq("liga_id", ligaId)
-    .order("total_neto", { ascending: false });
+  const [{ data: liga }, { data: miembros, error }] = await Promise.all([
+    supabase
+      .schema("liga")
+      .from("ligas")
+      .select("id, nombre, presupuesto")
+      .eq("id", ligaId)
+      .single(),
+    supabase
+      .schema("liga")
+      .from("v_miembros_saldo")
+      .select(
+        "miembro_id, nombre, email, foto_url, saldo, n_jugadores, valor_mercado_plantilla, total_neto",
+      )
+      .eq("liga_id", ligaId)
+      .order("total_neto", { ascending: false }),
+  ]);
 
   if (error) {
     return (

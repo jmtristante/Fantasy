@@ -61,23 +61,25 @@ export default async function MercadoPage({
   const rawFecha = params.fecha ?? activeDate;
   const selectedFecha = FECHA_RE.test(rawFecha) ? rawFecha : activeDate;
 
-  const { data: fechasHist } = await supabase
-    .schema("liga")
-    .from("v_market_historial")
-    .select("fecha")
-    .eq("liga_id", ligaId);
+  const [{ data: fechasHist }, { data: entradas, error: entradasError }] =
+    await Promise.all([
+      supabase
+        .schema("liga")
+        .from("v_market_historial")
+        .select("fecha")
+        .eq("liga_id", ligaId),
+      supabase
+        .schema("liga")
+        .from("market_entradas")
+        .select("id, jugador_id")
+        .eq("liga_id", ligaId)
+        .eq("fecha", selectedFecha)
+        .order("creado"),
+    ]);
 
   const fechas = Array.from(
     new Set([...(fechasHist ?? []).map((h) => h.fecha as string), selectedFecha, activeDate]),
   ).sort((a, b) => a.localeCompare(b));
-
-  const { data: entradas, error: entradasError } = await supabase
-    .schema("liga")
-    .from("market_entradas")
-    .select("id, jugador_id")
-    .eq("liga_id", ligaId)
-    .eq("fecha", selectedFecha)
-    .order("creado");
 
   const ids = (entradas ?? []).map((e) => e.jugador_id as number);
 
@@ -92,14 +94,27 @@ export default async function MercadoPage({
     lesion?: string | null;
     equipos: { nombre: string; escudo_url: string } | { nombre: string; escudo_url: string }[] | null;
   }[] = [];
+  let precios: {
+    jugador_id: number;
+    valor: number | null;
+    tendencia: number | null;
+    aceleracion_estado: string | null;
+  }[] = [];
   if (ids.length > 0) {
-    const jugQuery = await supabase
-      .from("jugadores")
-      .select(
-        "jugador_id, nombre, posicion, foto_url, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
-      )
-      .in("jugador_id", ids);
+    const [jugQuery, { data: preciosData }] = await Promise.all([
+      supabase
+        .from("jugadores")
+        .select(
+          "jugador_id, nombre, posicion, foto_url, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
+        )
+        .in("jugador_id", ids),
+      supabase
+        .from("v_precio_actual")
+        .select("jugador_id, valor, tendencia, aceleracion_estado")
+        .in("jugador_id", ids),
+    ]);
     jugadores = (jugQuery.data ?? []) as typeof jugadores;
+    precios = (preciosData ?? []) as typeof precios;
   }
   const infoJugador = new Map<
     number,
@@ -129,20 +144,6 @@ export default async function MercadoPage({
       probabilidad: j.probabilidad ?? null,
       lesion: j.lesion ?? null,
     });
-  }
-
-  let precios: {
-    jugador_id: number;
-    valor: number | null;
-    tendencia: number | null;
-    aceleracion_estado: string | null;
-  }[] = [];
-  if (ids.length > 0) {
-    const { data } = await supabase
-      .from("v_precio_actual")
-      .select("jugador_id, valor, tendencia, aceleracion_estado")
-      .in("jugador_id", ids);
-    precios = (data ?? []) as typeof precios;
   }
   const precioPorJugador = new Map(precios.map((p) => [p.jugador_id, p]));
 

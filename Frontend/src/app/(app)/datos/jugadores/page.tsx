@@ -7,16 +7,17 @@ export const dynamic = "force-dynamic";
 export default async function JugadoresPage() {
   const supabase = await createClient();
 
-  const { data: jugadores } = await supabase
-    .from("jugadores")
-    .select(
-      "jugador_id, nombre, posicion, edad, foto_url, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
-    )
-    .order("nombre");
-
-  const { data: precios } = await supabase
-    .from("v_precio_actual")
-    .select("jugador_id, valor, diferencia_pct, tendencia, aceleracion_estado");
+  const [{ data: jugadores }, { data: precios }] = await Promise.all([
+    supabase
+      .from("jugadores")
+      .select(
+        "jugador_id, nombre, posicion, edad, foto_url, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
+      )
+      .order("nombre"),
+    supabase
+      .from("v_precio_actual")
+      .select("jugador_id, valor, diferencia_pct, tendencia, aceleracion_estado"),
+  ]);
 
   const precioPorJugador = new Map(
     (precios ?? []).map((p) => [

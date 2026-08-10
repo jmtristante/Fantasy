@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { formatValor } from "@/lib/format";
+import { getCurrentUser } from "@/lib/auth-user";
 import { CreateLigaForm } from "@/components/create-liga-form";
 import { DeleteLigaButton } from "@/components/delete-liga-button";
 
@@ -20,23 +21,22 @@ export default async function LigasPage({
 }) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
-  const { data: ligas, error } = await supabase
-    .schema("liga")
-    .from("ligas")
-    .select("id, nombre, temporada, presupuesto, descripcion, creado, mercado_reset_hora")
-    .order("nombre");
-
-  const { data: misFichas } = user?.email
-    ? await supabase
-        .schema("liga")
-        .from("miembros")
-        .select("liga_id, es_admin")
-        .ilike("email", user.email)
-    : { data: null };
+  const [{ data: ligas, error }, { data: misFichas }] = await Promise.all([
+    supabase
+      .schema("liga")
+      .from("ligas")
+      .select("id, nombre, temporada, presupuesto, descripcion, creado, mercado_reset_hora")
+      .order("nombre"),
+    user?.email
+      ? supabase
+          .schema("liga")
+          .from("miembros")
+          .select("liga_id, es_admin")
+          .ilike("email", user.email)
+      : Promise.resolve({ data: null }),
+  ]);
 
   const ligasAdmin = new Set<number>(
     (misFichas ?? [])
