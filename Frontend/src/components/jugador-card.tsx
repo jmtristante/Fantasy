@@ -1,5 +1,6 @@
-import { Plus, Trash2, Lock } from "lucide-react";
+import { Plus, Trash2, Lock, Minus, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, TriangleAlert } from "lucide-react";
 import { useState } from "react";
+import type { LucideIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ export type CardJugador = {
   escudo: string | null;
   valor: number | null;
   tendencia: number | null;
+  aceleracion_estado?: string | null;
   estado?: string | null;
   jerarquia?: string | null;
   probabilidad?: number | null;
@@ -33,18 +35,82 @@ function Iniciales({ nombre }: { nombre: string }) {
   );
 }
 
-function TendenciaBadge({ tendencia }: { tendencia: number | null }) {
-  if (tendencia == null) return null;
-  const sube = tendencia > 0;
-  const baja = tendencia < 0;
-  const clase = sube
+function normalizaEstado(estado: string | null | undefined) {
+  return (estado ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+export function IndicadorMovimientoBadge({
+  tendencia,
+  aceleracion_estado,
+}: {
+  tendencia: number | null;
+  aceleracion_estado?: string | null;
+}) {
+  const estado = normalizaEstado(aceleracion_estado);
+  const v = tendencia ?? 0;
+  const sube = v > 0;
+  const baja = v < 0;
+  const verde = v >= 0;
+
+  if (!estado) {
+    return (
+      <Badge
+        className="px-1.5 py-0 text-[11px] shadow bg-muted text-muted-foreground"
+        title="Sin movimiento"
+      >
+        <Minus className="size-3" />
+      </Badge>
+    );
+  }
+
+  let Icono: LucideIcon = Minus;
+  const mucho = estado.includes("mucho");
+
+  if (estado.startsWith("desacelera")) {
+    Icono = mucho
+      ? sube
+        ? ChevronsDown
+        : baja
+          ? ChevronsUp
+          : Minus
+      : sube
+        ? ArrowDown
+        : baja
+          ? ArrowUp
+          : Minus;
+  } else if (estado.startsWith("acelera")) {
+    Icono = mucho
+      ? sube
+        ? ChevronsUp
+        : baja
+          ? ChevronsDown
+          : Minus
+      : sube
+        ? ArrowUp
+        : baja
+          ? ArrowDown
+          : Minus;
+  } else if (estado.startsWith("inflexion")) {
+    Icono = TriangleAlert;
+  } else {
+    Icono = Minus;
+  }
+
+  const claseFondo = verde
     ? "bg-emerald-600/90 text-white"
     : baja
       ? "bg-red-600/90 text-white"
       : "bg-muted text-muted-foreground";
   return (
-    <Badge className={`px-1.5 py-0 text-[11px] shadow ${clase}`}>
-      {sube ? `▲ ${tendencia}` : baja ? `▼ ${Math.abs(tendencia)}` : "±0"}
+    <Badge
+      className={`px-1.5 py-0 text-[11px] shadow ${claseFondo}`}
+      title={aceleracion_estado ?? undefined}
+    >
+      <Icono className="size-3" />
     </Badge>
   );
 }
@@ -131,7 +197,7 @@ export function JugadorCard({
   bloqueado?: boolean;
   bloqueadoHasta?: string | null;
 }) {
-  const { nombre, posicion, equipo, foto, escudo, valor, tendencia } = jugador;
+  const { nombre, posicion, equipo, foto, escudo, valor, tendencia, aceleracion_estado } = jugador;
   const [detalleOpen, setDetalleOpen] = useState(false);
   return (
     <>
@@ -163,7 +229,10 @@ export function JugadorCard({
             />
           )}
           <div className="absolute right-1 top-1">
-            <TendenciaBadge tendencia={tendencia} />
+            <IndicadorMovimientoBadge
+              tendencia={tendencia}
+              aceleracion_estado={aceleracion_estado}
+            />
           </div>
           {bloqueado && <BloqueoBadge hasta={bloqueadoHasta ?? null} />}
         </div>

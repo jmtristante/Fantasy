@@ -194,16 +194,17 @@ def sync_precios(cur, precios):
             """
             INSERT INTO precios_diarios (
                 jugador_id, fecha, valor, valor_anterior, diferencia,
-                diferencia_pct, tendencia, aceleracion
+                diferencia_pct, tendencia, aceleracion, aceleracion_estado
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (jugador_id, fecha) DO UPDATE SET
               valor = EXCLUDED.valor,
               valor_anterior = EXCLUDED.valor_anterior,
               diferencia = EXCLUDED.diferencia,
               diferencia_pct = EXCLUDED.diferencia_pct,
               tendencia = EXCLUDED.tendencia,
-              aceleracion = EXCLUDED.aceleracion
+              aceleracion = EXCLUDED.aceleracion,
+              aceleracion_estado = EXCLUDED.aceleracion_estado
             """,
             (
                 precio["jugador_id"],
@@ -214,6 +215,7 @@ def sync_precios(cur, precios):
                 precio.get("diferencia_pct"),
                 precio.get("tendencia"),
                 precio.get("aceleracion"),
+                precio.get("aceleracion_estado"),
             ),
         )
 

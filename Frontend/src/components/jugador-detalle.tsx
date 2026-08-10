@@ -105,6 +105,16 @@ function formatFechaCorta(fecha: string): string {
   return d.toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" });
 }
 
+function formatFechaDia(fecha: string): string {
+  const d = new Date(fecha);
+  if (isNaN(d.getTime())) return fecha;
+  return d.toLocaleDateString("es-ES", { dateStyle: "short" });
+}
+
+function diaDe(fecha: string): string {
+  return fecha.slice(0, 10);
+}
+
 function formatEje(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
@@ -356,7 +366,13 @@ export function JugadorDetalleSheet({
   const duda = (d?.lesion ?? "").toLowerCase() === "duda";
 
   const historialOrdenado = [...(d?.historial ?? [])]
-    .map((h) => ({ ...h, label: formatFechaCorta(h.fecha) }))
+    .reduce<{ fecha: string; valor: number }[]>((acc, h) => {
+      const dia = diaDe(h.fecha);
+      if (acc.some((a) => diaDe(a.fecha) === dia)) return acc;
+      acc.push(h);
+      return acc;
+    }, [])
+    .map((h) => ({ ...h, label: formatFechaDia(h.fecha) }))
     .reverse();
   const historialFiltrado =
     rangoPrecios === "todo"

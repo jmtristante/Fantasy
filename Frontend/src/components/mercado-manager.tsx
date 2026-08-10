@@ -62,13 +62,17 @@ export function MercadoManager({
             "jugador_id, nombre, posicion, foto_url, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
           )
           .order("nombre"),
-        supabase.from("v_precio_actual").select("jugador_id, valor, tendencia"),
+        supabase.from("v_precio_actual").select("jugador_id, valor, tendencia, aceleracion_estado"),
       ]);
       if (!activo) return;
       const precioPorJugador = new Map(
         (precios.data ?? []).map((p) => [
           p.jugador_id as number,
-          { valor: p.valor as number | null, tendencia: p.tendencia as number | null },
+          {
+            valor: p.valor as number | null,
+            tendencia: p.tendencia as number | null,
+            aceleracion_estado: (p.aceleracion_estado as string | null) ?? null,
+          },
         ]),
       );
       const catalog: CardJugador[] = (jugadores.data ?? []).map((j) => {
@@ -88,6 +92,7 @@ export function MercadoManager({
           escudo: (e?.escudo_url as string | undefined) ?? null,
           valor: p?.valor ?? null,
           tendencia: p?.tendencia ?? null,
+          aceleracion_estado: p?.aceleracion_estado ?? null,
           estado: (j.estado as string | null) ?? null,
           jerarquia: (j.jerarquia as string | null) ?? null,
           probabilidad: (j.probabilidad as number | null) ?? null,

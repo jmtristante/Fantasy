@@ -59,7 +59,7 @@ export default async function PlantillasPage() {
     .schema("liga")
     .from("v_plantilla")
     .select(
-      "miembro_id, miembro, jugador_id, jugador, posicion, equipo, clausula, valor_mercado, tendencia, bloqueado, bloqueado_hasta",
+      "miembro_id, miembro, jugador_id, jugador, posicion, equipo, clausula, valor_mercado, tendencia, aceleracion_estado, bloqueado, bloqueado_hasta",
     )
     .eq("liga_id", ligaId);
 
@@ -110,6 +110,7 @@ export default async function PlantillasPage() {
       valor: (p.valor_mercado as number | null) ?? null,
       clausula: (p.clausula as number | null) ?? null,
       tendencia: (p.tendencia as number | null) ?? null,
+      aceleracion_estado: (p.aceleracion_estado as string | null) ?? null,
       bloqueado: Boolean(p.bloqueado),
       bloqueadoHasta: (p.bloqueado_hasta as string | null) ?? null,
       estado: f?.estado ?? null,

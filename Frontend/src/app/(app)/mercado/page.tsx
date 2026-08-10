@@ -128,11 +128,16 @@ export default async function MercadoPage({
     });
   }
 
-  let precios: { jugador_id: number; valor: number | null; tendencia: number | null }[] = [];
+  let precios: {
+    jugador_id: number;
+    valor: number | null;
+    tendencia: number | null;
+    aceleracion_estado: string | null;
+  }[] = [];
   if (ids.length > 0) {
     const { data } = await supabase
       .from("v_precio_actual")
-      .select("jugador_id, valor, tendencia")
+      .select("jugador_id, valor, tendencia, aceleracion_estado")
       .in("jugador_id", ids);
     precios = (data ?? []) as typeof precios;
   }
@@ -151,6 +156,7 @@ export default async function MercadoPage({
       escudo: j?.escudo ?? null,
       valor: p?.valor ?? null,
       tendencia: p?.tendencia ?? null,
+      aceleracion_estado: p?.aceleracion_estado ?? null,
       estado: j?.estado ?? null,
       jerarquia: j?.jerarquia ?? null,
       probabilidad: j?.probabilidad ?? null,

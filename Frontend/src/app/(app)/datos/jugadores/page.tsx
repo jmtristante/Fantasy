@@ -16,12 +16,16 @@ export default async function JugadoresPage() {
 
   const { data: precios } = await supabase
     .from("v_precio_actual")
-    .select("jugador_id, valor, diferencia_pct, tendencia");
+    .select("jugador_id, valor, diferencia_pct, tendencia, aceleracion_estado");
 
   const precioPorJugador = new Map(
     (precios ?? []).map((p) => [
       p.jugador_id,
-      { valor: p.valor as number | null, tendencia: p.tendencia as number | null },
+      {
+        valor: p.valor as number | null,
+        tendencia: p.tendencia as number | null,
+        aceleracion_estado: (p.aceleracion_estado as string | null) ?? null,
+      },
     ]),
   );
 
@@ -47,6 +51,7 @@ export default async function JugadoresPage() {
       foto: (j.foto_url as string) || null,
       valor: p?.valor ?? null,
       tendencia: p?.tendencia ?? null,
+      aceleracion_estado: p?.aceleracion_estado ?? null,
       estado: (j.estado as string | null) ?? null,
       jerarquia: (j.jerarquia as string | null) ?? null,
       probabilidad: (j.probabilidad as number | null) ?? null,

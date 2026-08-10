@@ -16,7 +16,7 @@ import {
 import { MiembroAvatar } from "@/components/miembro-avatar";
 import { formatValor } from "@/lib/format";
 import { JugadorDetalleSheet } from "@/components/jugador-detalle";
-import type { CardJugador } from "@/components/jugador-card";
+import { IndicadorMovimientoBadge, type CardJugador } from "@/components/jugador-card";
 
 export type FilaJugador = {
   jugador_id: number;
@@ -29,6 +29,7 @@ export type FilaJugador = {
   ventas: number;
   valor_actual: number | null;
   tendencia: number | null;
+  aceleracion_estado?: string | null;
   en_plantilla: boolean;
   invertido: number;
   devuelto: number;
@@ -256,21 +257,10 @@ export function RentabilidadManager({
                                 <div className="flex items-center gap-1.5">
                                   <span className="truncate font-medium">{f.nombre}</span>
                                   {f.tendencia != null && (
-                                    <span
-                                      className={`shrink-0 rounded px-1 text-[10px] font-semibold tabular-nums ${
-                                        f.tendencia > 0
-                                          ? "bg-emerald-600/90 text-white"
-                                          : f.tendencia < 0
-                                            ? "bg-red-600/90 text-white"
-                                            : "bg-muted text-muted-foreground"
-                                      }`}
-                                    >
-                                      {f.tendencia > 0
-                                        ? `▲ ${f.tendencia}`
-                                        : f.tendencia < 0
-                                          ? `▼ ${Math.abs(f.tendencia)}`
-                                          : "±0"}
-                                    </span>
+                                    <IndicadorMovimientoBadge
+                                      tendencia={f.tendencia}
+                                      aceleracion_estado={f.aceleracion_estado}
+                                    />
                                   )}
                                 </div>
                                 <div className="text-xs text-muted-foreground">

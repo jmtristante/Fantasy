@@ -25,6 +25,8 @@ def scrape(teams=None, refresh=False):
             continue
         equipo_span = tr.select_one(".player-equipo span")
         equipo_nombre = equipo_span.get_text(strip=True) if equipo_span else None
+        acel_icono = tr.select_one("td i[data-tooltip]")
+        acel_estado = acel_icono.get("data-tooltip") if acel_icono else None
         precios.append(
             {
                 "jugador_id": jugador_id,
@@ -40,6 +42,7 @@ def scrape(teams=None, refresh=False):
                 "diferencia_pct": to_float(attrs.get("data-diferencia-pct1")),
                 "tendencia": to_int(attrs.get("data-tendencia")),
                 "aceleracion": to_int(attrs.get("data-aceleracion")),
+                "aceleracion_estado": acel_estado,
             }
         )
     return precios

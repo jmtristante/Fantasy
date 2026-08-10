@@ -68,13 +68,16 @@ export default async function RentabilidadPage() {
 
   const { data: precios } = await supabase
     .from("v_precio_actual")
-    .select("jugador_id, valor, tendencia");
+    .select("jugador_id, valor, tendencia, aceleracion_estado");
 
   const valorPorJugador = new Map(
     (precios ?? []).map((p) => [p.jugador_id as number, p.valor as number | null]),
   );
   const tendenciaPorJugador = new Map(
     (precios ?? []).map((p) => [p.jugador_id as number, p.tendencia as number | null]),
+  );
+  const acelEstadoPorJugador = new Map(
+    (precios ?? []).map((p) => [p.jugador_id as number, (p.aceleracion_estado as string | null) ?? null]),
   );
 
   type Stub = {
@@ -187,6 +190,7 @@ export default async function RentabilidadPage() {
       ventas: s.ventas,
       valor_actual: enPlantilla ? valorPorJugador.get(jugadorId) ?? null : null,
       tendencia: tendenciaPorJugador.get(jugadorId) ?? null,
+      aceleracion_estado: acelEstadoPorJugador.get(jugadorId) ?? null,
       en_plantilla: enPlantilla,
       invertido: s.invertido,
       devuelto: s.devuelto,

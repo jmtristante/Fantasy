@@ -56,6 +56,7 @@ def _precios_multi_juego(jugadores):
                 "diferencia_pct": None,
                 "tendencia": None,
                 "aceleracion": None,
+                "aceleracion_estado": None,
             }
         )
     return precios
