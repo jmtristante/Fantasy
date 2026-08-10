@@ -125,6 +125,25 @@ function BloqueoBadge({ hasta }: { hasta: string | null }) {
   );
 }
 
+function LesionBadge({ lesion }: { lesion?: string | null }) {
+  const l = (lesion ?? "").toLowerCase();
+  if (l === "lesionado") {
+    return (
+      <span className="absolute bottom-1 right-1 rounded-full bg-red-600/95 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow">
+        Lesionado
+      </span>
+    );
+  }
+  if (l === "duda") {
+    return (
+      <span className="absolute bottom-1 right-1 rounded-full bg-amber-600/95 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow">
+        Duda
+      </span>
+    );
+  }
+  return null;
+}
+
 const ESTADOS_LEGIBLES: Record<string, { texto: string; clase: string }> = {
   "1": { texto: "Titular", clase: "bg-emerald-600/90 text-white" },
   "2": { texto: "Suplente", clase: "bg-sky-600/90 text-white" },
@@ -197,7 +216,7 @@ export function JugadorCard({
   bloqueado?: boolean;
   bloqueadoHasta?: string | null;
 }) {
-  const { nombre, posicion, equipo, foto, escudo, valor, tendencia, aceleracion_estado } = jugador;
+  const { nombre, posicion, equipo, foto, escudo, valor, tendencia, aceleracion_estado, lesion } = jugador;
   const [detalleOpen, setDetalleOpen] = useState(false);
   return (
     <>
@@ -235,6 +254,7 @@ export function JugadorCard({
             />
           </div>
           {bloqueado && <BloqueoBadge hasta={bloqueadoHasta ?? null} />}
+          <LesionBadge lesion={lesion} />
         </div>
         <div className="flex flex-1 flex-col gap-1 p-2">
           <span className="truncate text-sm font-semibold" title={nombre}>

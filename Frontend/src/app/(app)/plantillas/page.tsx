@@ -66,13 +66,13 @@ export default async function PlantillasPage() {
   const ids = (plantillaRaw ?? []).map((p) => p.jugador_id as number);
   let fotos: Record<
     number,
-    { foto: string | null; escudo: string | null; estado: string | null; jerarquia: string | null; probabilidad: number | null }
+    { foto: string | null; escudo: string | null; estado: string | null; jerarquia: string | null; probabilidad: number | null; lesion: string | null }
   > = {};
   if (ids.length > 0) {
     const { data: jug } = await supabase
       .from("jugadores")
       .select(
-        "jugador_id, foto_url, estado, jerarquia, probabilidad, equipos(escudo_url)",
+        "jugador_id, foto_url, estado, jerarquia, probabilidad, lesion, equipos(escudo_url)",
       )
       .in("jugador_id", ids);
     const escudoPorId = new Map<number, string | undefined>();
@@ -81,7 +81,7 @@ export default async function PlantillasPage() {
       const esc = Array.isArray(e) ? e[0] : e;
       escudoPorId.set(j.jugador_id as number, (esc?.escudo_url as string | undefined));
     }
-    fotos = (jug ?? []).reduce<Record<number, { foto: string | null; escudo: string | null; estado: string | null; jerarquia: string | null; probabilidad: number | null }>>(
+    fotos = (jug ?? []).reduce<Record<number, { foto: string | null; escudo: string | null; estado: string | null; jerarquia: string | null; probabilidad: number | null; lesion: string | null }>>(
       (acc, j) => {
         acc[j.jugador_id as number] = {
           foto: (j.foto_url as string) || null,
@@ -89,6 +89,7 @@ export default async function PlantillasPage() {
           estado: (j.estado as string | null) ?? null,
           jerarquia: (j.jerarquia as string | null) ?? null,
           probabilidad: (j.probabilidad as number | null) ?? null,
+          lesion: (j.lesion as string | null) ?? null,
         };
         return acc;
       },
@@ -116,6 +117,7 @@ export default async function PlantillasPage() {
       estado: f?.estado ?? null,
       jerarquia: f?.jerarquia ?? null,
       probabilidad: f?.probabilidad ?? null,
+      lesion: f?.lesion ?? null,
     };
   });
 

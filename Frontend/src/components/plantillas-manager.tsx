@@ -31,6 +31,7 @@ type EntradaPlantilla = {
   estado?: string | null;
   jerarquia?: string | null;
   probabilidad?: number | null;
+  lesion?: string | null;
 };
 
 export function PlantillasManager({
@@ -186,6 +187,10 @@ export function PlantillasManager({
         aceleracion_estado: c.aceleracion_estado,
         bloqueado: false,
         bloqueadoHasta: null,
+        estado: c.estado,
+        jerarquia: c.jerarquia,
+        probabilidad: c.probabilidad,
+        lesion: c.lesion,
       },
     ]);
     router.refresh();
@@ -361,6 +366,7 @@ export function PlantillasManager({
                     estado: e.estado,
                     jerarquia: e.jerarquia,
                     probabilidad: e.probabilidad,
+                    lesion: e.lesion,
                   }}
                   bloqueado={e.bloqueado}
                   bloqueadoHasta={e.bloqueadoHasta}

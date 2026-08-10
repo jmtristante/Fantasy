@@ -89,13 +89,14 @@ export default async function MercadoPage({
     estado?: string | null;
     jerarquia?: string | null;
     probabilidad?: number | null;
+    lesion?: string | null;
     equipos: { nombre: string; escudo_url: string } | { nombre: string; escudo_url: string }[] | null;
   }[] = [];
   if (ids.length > 0) {
     const jugQuery = await supabase
       .from("jugadores")
       .select(
-        "jugador_id, nombre, posicion, foto_url, estado, jerarquia, probabilidad, equipos(nombre, escudo_url)",
+        "jugador_id, nombre, posicion, foto_url, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
       )
       .in("jugador_id", ids);
     jugadores = (jugQuery.data ?? []) as typeof jugadores;
@@ -111,6 +112,7 @@ export default async function MercadoPage({
       estado?: string | null;
       jerarquia?: string | null;
       probabilidad?: number | null;
+      lesion?: string | null;
     }
   >();
   for (const j of jugadores) {
@@ -125,6 +127,7 @@ export default async function MercadoPage({
       estado: j.estado ?? null,
       jerarquia: j.jerarquia ?? null,
       probabilidad: j.probabilidad ?? null,
+      lesion: j.lesion ?? null,
     });
   }
 
@@ -160,6 +163,7 @@ export default async function MercadoPage({
       estado: j?.estado ?? null,
       jerarquia: j?.jerarquia ?? null,
       probabilidad: j?.probabilidad ?? null,
+      lesion: j?.lesion ?? null,
     };
   });
 
