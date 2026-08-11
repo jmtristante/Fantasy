@@ -43,13 +43,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Hola, {user?.email ?? "fantástico"}
-        </h1>
-        <p className="text-muted-foreground">
-          Imagen diaria de tu liga de LaLiga.
-        </p>
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-emerald-700 to-emerald-900 p-6 text-white shadow-lg md:p-8">
+        <div className="pointer-events-none absolute inset-0 opacity-15 [background-image:repeating-linear-gradient(0deg,transparent,transparent_44px,#000_44px,#000_48px)]" />
+        <div className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-emerald-400/20 blur-3xl" />
+        <div className="relative">
+          <h1 className="font-heading text-4xl tracking-wider md:text-5xl">
+            Hola, {user?.email?.split("@")[0] ?? "fantástico"}
+          </h1>
+          <p className="mt-1 text-emerald-100">
+            Imagen diaria de tu liga de LaLiga. Fichajes, cláusulas y rentabilidad
+            de tus jugadores.
+          </p>
+        </div>
       </div>
 
       {!configured && (
@@ -80,24 +85,24 @@ export default async function DashboardPage() {
       {configured && !error && (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card className="border-emerald-200 bg-gradient-to-br from-white to-emerald-50 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Jugadores en la base
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{nJugadores}</div>
+                <div className="text-3xl font-bold text-emerald-700">{nJugadores}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-emerald-200 bg-gradient-to-br from-white to-emerald-50 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Número de ligas
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{ligas.length}</div>
+                <div className="text-3xl font-bold text-emerald-700">{ligas.length}</div>
               </CardContent>
             </Card>
           </div>

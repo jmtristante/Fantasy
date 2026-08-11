@@ -14,6 +14,7 @@ import {
   TrendingUp,
   LogOut,
   Database,
+  Trophy,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -101,6 +102,21 @@ export function AppShell({
             <SidebarMenuItem>
               <LigaSelector ligas={ligas} selectedLigaId={selectedLigaId} />
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <div className="flex items-center gap-2 px-2 pt-1">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-md shadow-emerald-900/30">
+                  <Trophy className="size-4" />
+                </div>
+                <div className="grid text-left text-sm leading-tight">
+                  <span className="truncate font-heading text-base tracking-wide">
+                    Fantasy LaLiga
+                  </span>
+                  <span className="truncate text-[11px] text-muted-foreground">
+                    Liga privada de amigos
+                  </span>
+                </div>
+              </div>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
@@ -151,10 +167,12 @@ export function AppShell({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur-md">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <span className="text-sm text-muted-foreground">Fantasy LaLiga</span>
+          <span className="text-sm font-semibold text-muted-foreground">
+            Fantasy LaLiga
+          </span>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">{children}</main>
       </SidebarInset>
