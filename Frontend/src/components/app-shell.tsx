@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useSyncExternalStore } from "react";
 
 import {
   LayoutDashboard,
@@ -14,6 +16,8 @@ import {
   TrendingUp,
   LogOut,
   Database,
+  Moon,
+  Sun,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -142,6 +146,9 @@ export function AppShell({
               <UserMenu email={email} onSignOut={handleSignOut} />
             </SidebarMenuItem>
             <SidebarMenuItem>
+              <ThemeToggle />
+            </SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton onClick={handleSignOut}>
                 <LogOut />
                 <span>Cerrar sesión</span>
@@ -247,5 +254,24 @@ function NavItem({
         <span>{label}</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
+  );
+}
+
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const dark = mounted && resolvedTheme === "dark";
+  return (
+    <SidebarMenuButton
+      onClick={() => setTheme(dark ? "light" : "dark")}
+      aria-label={dark ? "Activar modo claro" : "Activar modo oscuro"}
+    >
+      {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      <span>{dark ? "Modo claro" : "Modo oscuro"}</span>
+    </SidebarMenuButton>
   );
 }
