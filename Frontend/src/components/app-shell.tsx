@@ -14,7 +14,6 @@ import {
   TrendingUp,
   LogOut,
   Database,
-  Trophy,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -101,21 +100,6 @@ export function AppShell({
           <SidebarMenu>
             <SidebarMenuItem>
               <LigaSelector ligas={ligas} selectedLigaId={selectedLigaId} />
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <div className="flex items-center gap-2 px-2 pt-1">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                  <Trophy className="size-4" />
-                </div>
-                <div className="grid text-left text-sm leading-tight">
-                  <span className="truncate font-heading text-base tracking-wide">
-                    Fantasy LaLiga
-                  </span>
-                  <span className="truncate text-[11px] text-muted-foreground">
-                    Liga privada de amigos
-                  </span>
-                </div>
-              </div>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
