@@ -21,7 +21,6 @@ export function MercadoManager({
   resetHora,
   activeDate,
   selectedFecha,
-  fechas,
   isEditable,
   iniciales,
   debug,
@@ -31,7 +30,6 @@ export function MercadoManager({
   resetHora: string | null;
   activeDate: string;
   selectedFecha: string;
-  fechas: string[];
   isEditable: boolean;
   iniciales: CardJugador[];
   debug?: { ligaError: string | null; entradasError: string | null; nEntradas: number };
@@ -168,12 +166,6 @@ export function MercadoManager({
     router.refresh();
   }
 
-  const formatoFecha = (f: string) =>
-    new Date(`${f}T00:00:00`).toLocaleDateString("es-ES", {
-      day: "2-digit",
-      month: "short",
-    });
-
   const verMas = () => setLimite((n) => n + LIMITE_FILA);
 
   return (
@@ -220,25 +212,17 @@ export function MercadoManager({
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <div className="flex flex-wrap gap-2">
-            {fechas.map((f) => {
-              const activa = f === selectedFecha;
-              const esActual = f === activeDate;
-              return (
-                <Button
-                  key={f}
-                  size="sm"
-                  variant={activa ? "default" : "outline"}
-                  onClick={() => {
-                    setBusqueda("");
-                    router.push(`/mercado?fecha=${f}`);
-                  }}
-                >
-                  {esActual && <span className="mr-1 size-1.5 rounded-full bg-current" />}
-                  {formatoFecha(f)}
-                </Button>
-              );
-            })}
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              value={selectedFecha}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                setBusqueda("");
+                router.push(`/mercado?fecha=${e.target.value}`);
+              }}
+              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+            />
           </div>
 
           {lista.length === 0 ? (
@@ -248,7 +232,7 @@ export function MercadoManager({
                 : `No hay jugadores en el mercado de ${selectedFecha}.`}
             </p>
           ) : (
-            <div className="flex gap-3 overflow-x-auto pb-1">
+            <div className="flex flex-wrap gap-3">
               {lista.map((e) => (
                 <JugadorCard
                   key={e.id}

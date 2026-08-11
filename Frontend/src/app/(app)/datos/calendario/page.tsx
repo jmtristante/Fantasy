@@ -13,15 +13,36 @@ export default async function CalendarioPage({
 }) {
   const supabase = await createClient();
 
-  const { data: jornadas } = await supabase
-    .from("jornadas")
-    .select("id, numero")
-    .order("numero");
+  const [{ data: jornadas }, { data: partidosEstado }] = await Promise.all([
+    supabase.from("jornadas").select("id, numero").order("numero"),
+    supabase.from("partidos").select("jornada_id, resultado_local, resultado_visitante"),
+  ]);
 
   const params = await searchParams;
   const numero = Number(params.j);
+
+  // Proxima jornada a jugar: la primera con al menos un partido sin resultado.
+  const jugadosPorJornada = new Map<number, number>();
+  for (const p of partidosEstado ?? []) {
+    const jid = p.jornada_id as number;
+    const esJugado =
+      p.resultado_local != null && p.resultado_visitante != null;
+    jugadosPorJornada.set(jid, (jugadosPorJornada.get(jid) ?? 0) + (esJugado ? 1 : 0));
+  }
+  const totalPorJornada = new Map<number, number>();
+  for (const p of partidosEstado ?? []) {
+    const jid = p.jornada_id as number;
+    totalPorJornada.set(jid, (totalPorJornada.get(jid) ?? 0) + 1);
+  }
+  const proxima =
+    jornadas?.find(
+      (j) =>
+        (jugadosPorJornada.get(j.id as number) ?? 0) <
+        (totalPorJornada.get(j.id as number) ?? 0),
+    ) ?? jornadas?.at(-1);
+
   const actual =
-    jornadas?.find((j) => j.numero === numero) ?? jornadas?.at(-1);
+    jornadas?.find((j) => j.numero === numero) ?? proxima;
 
   const { data: partidos } = await supabase
     .from("partidos")

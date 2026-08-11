@@ -61,25 +61,15 @@ export default async function MercadoPage({
   const rawFecha = params.fecha ?? activeDate;
   const selectedFecha = FECHA_RE.test(rawFecha) ? rawFecha : activeDate;
 
-  const [{ data: fechasHist }, { data: entradas, error: entradasError }] =
-    await Promise.all([
-      supabase
-        .schema("liga")
-        .from("v_market_historial")
-        .select("fecha")
-        .eq("liga_id", ligaId),
-      supabase
-        .schema("liga")
-        .from("market_entradas")
-        .select("id, jugador_id")
-        .eq("liga_id", ligaId)
-        .eq("fecha", selectedFecha)
-        .order("creado"),
-    ]);
-
-  const fechas = Array.from(
-    new Set([...(fechasHist ?? []).map((h) => h.fecha as string), selectedFecha, activeDate]),
-  ).sort((a, b) => a.localeCompare(b));
+  const [{ data: entradas, error: entradasError }] = await Promise.all([
+    supabase
+      .schema("liga")
+      .from("market_entradas")
+      .select("id, jugador_id")
+      .eq("liga_id", ligaId)
+      .eq("fecha", selectedFecha)
+      .order("creado"),
+  ]);
 
   const ids = (entradas ?? []).map((e) => e.jugador_id as number);
 
@@ -175,7 +165,6 @@ export default async function MercadoPage({
       resetHora={resetHora}
       activeDate={activeDate}
       selectedFecha={selectedFecha}
-      fechas={fechas}
       isEditable={esAdmin && selectedFecha === activeDate}
       iniciales={iniciales}
       debug={{
