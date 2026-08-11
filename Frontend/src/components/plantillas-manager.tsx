@@ -37,14 +37,12 @@ type EntradaPlantilla = {
 export function PlantillasManager({
   ligaId,
   ligaNombre,
-  plantillaCerrada,
   esAdmin,
   miembros,
   iniciales,
 }: {
   ligaId: number;
   ligaNombre: string;
-  plantillaCerrada: boolean;
   esAdmin: boolean;
   miembros: { id: number; nombre: string }[];
   iniciales: EntradaPlantilla[];
@@ -223,21 +221,6 @@ export function PlantillasManager({
     router.refresh();
   }
 
-  async function cambiarCerrada(cerrada: boolean) {
-    const supabase = createBrowserClient();
-    const { error } = await supabase
-      .schema("liga")
-      .from("ligas")
-      .update({ plantilla_cerrada: cerrada })
-      .eq("id", ligaId);
-    if (error) {
-      toast.error(`No se pudo cambiar el estado: ${error.message}`);
-      return;
-    }
-    toast.success(cerrada ? "Plantilla inicial cerrada" : "Plantilla inicial reabierta");
-    router.refresh();
-  }
-
   if (miembros.length === 0) {
     return (
       <div className="flex flex-col gap-4">
@@ -288,63 +271,28 @@ export function PlantillasManager({
             </Button>
           );
         })}
-        {esAdmin && (
-          <div className="ml-auto flex items-center gap-2">
-            {plantillaCerrada ? (
-              <Button size="sm" variant="outline" onClick={() => cambiarCerrada(false)}>
-                Reabrir plantilla inicial
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (
-                    confirm(
-                      "¿Cerrar la plantilla inicial? Después ya no podrás añadir ni quitar jugadores a mano.",
-                    )
-                  ) {
-                    cambiarCerrada(true);
-                  }
-                }}
-              >
-                Cerrar plantilla inicial
-              </Button>
-            )}
-          </div>
-        )}
+        {esAdmin && <div className="ml-auto" />}
       </div>
-
-      {plantillaCerrada && (
-        <p className="rounded-md border bg-muted/50 p-3 text-sm text-muted-foreground">
-          Plantilla inicial cerrada. A partir de ahora los cambios solo se hacen
-          mediante movimientos (compras y ventas).
-        </p>
-      )}
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {miembros.find((m) => m.id === seleccionado)?.nombre ?? "Miembro"}
             <Badge variant="secondary">{squadMiembro.length}</Badge>
-            {plantillaCerrada ? <Badge variant="outline">Cerrada</Badge> : null}
           </CardTitle>
           <CardDescription>
-            Plantilla actual.{" "}
-            {plantillaCerrada
-              ? "Solo cambia con movimientos."
-              : esAdmin
-                ? "Puedes quitar jugadores mientras sea la inicial."
-                : "Solo lectura."}
+            Plantilla inicial.{" "}
+            {esAdmin
+              ? "Puedes quitar jugadores mientras sea la inicial."
+              : "Solo lectura."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {squadMiembro.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {plantillaCerrada
-                ? "Este miembro no tiene jugadores."
-                : esAdmin
-                  ? "Todavía no tiene jugadores. Asígnalos desde abajo."
-                  : "Este miembro no tiene jugadores."}
+              {esAdmin
+                ? "Todavía no tiene jugadores. Asígnalos desde abajo."
+                : "Este miembro no tiene jugadores."}
             </p>
           ) : (
             <div className="flex flex-wrap gap-3">
@@ -371,7 +319,7 @@ export function PlantillasManager({
                   bloqueado={e.bloqueado}
                   bloqueadoHasta={e.bloqueadoHasta}
                   deshabilitado={quitando === e.jugador_id}
-                  onRemove={esAdmin && !plantillaCerrada ? () => quitar(e) : undefined}
+                  onRemove={esAdmin ? () => quitar(e) : undefined}
                 />
               ))}
             </div>
@@ -379,7 +327,7 @@ export function PlantillasManager({
         </CardContent>
       </Card>
 
-      {!plantillaCerrada && esAdmin && (
+      {esAdmin && (
         <Card>
           <CardHeader>
             <CardTitle>Añadir jugadores a la plantilla</CardTitle>
