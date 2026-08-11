@@ -61,7 +61,6 @@ const DATOS_NAV = [
 ];
 
 const LIGA_NAV = [
-  { href: "/ligas", label: "Mis ligas", icon: Users },
   { href: "/miembros", label: "Miembros", icon: Users },
   { href: "/plantillas", label: "Plantillas", icon: Shirt },
   { href: "/mercado", label: "Mercado", icon: Store },
