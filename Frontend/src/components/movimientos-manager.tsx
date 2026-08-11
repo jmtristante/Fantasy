@@ -672,7 +672,7 @@ export function MovimientosManager({
                               <img
                                 src={h.jugador_escudo}
                                 alt=""
-                                className="absolute -left-1.5 -top-1.5 size-5 rounded-full object-contain bg-white p-0.5 ring-1 ring-border"
+                                className="absolute -left-1.5 -top-1.5 size-5 rounded-full object-contain"
                               />
                             )}
                           </div>

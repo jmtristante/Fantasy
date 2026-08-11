@@ -408,7 +408,7 @@ export function JugadorDetalleSheet({
                 <img
                   src={d.equipo.escudo_url}
                   alt=""
-                  className="absolute bottom-0.5 right-0.5 size-6 rounded object-contain bg-white/90 p-0.5 ring-1 ring-border"
+                  className="absolute bottom-0.5 right-0.5 size-6 rounded object-contain"
                 />
               )}
             </div>

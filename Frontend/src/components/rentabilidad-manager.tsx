@@ -263,7 +263,7 @@ export function RentabilidadManager({
                                     <img
                                       src={f.escudo}
                                       alt=""
-                                      className="absolute -left-1.5 -top-1.5 size-4.5 rounded-full bg-white object-contain p-0.5 ring-1 ring-border"
+                                      className="absolute -left-1.5 -top-1.5 size-4.5 rounded-full object-contain"
                                     />
                                   )}
                                 </div>

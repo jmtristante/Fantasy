@@ -72,7 +72,7 @@ export default async function CalendarioPage({
       <img
         src={equipo.escudo_url}
         alt={equipo.nombre}
-        className="size-12 shrink-0 rounded-md object-contain bg-white p-0.5 ring-1 ring-border"
+        className="size-12 shrink-0 rounded-md object-contain"
       />
     ) : (
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border bg-muted text-xs font-semibold text-muted-foreground">

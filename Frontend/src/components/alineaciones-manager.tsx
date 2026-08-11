@@ -24,6 +24,7 @@ export type JugadorPlantilla = {
   foto: string | null;
   escudo: string | null;
   clausula: number | null;
+  probabilidad: number | null;
 };
 
 export type AlineacionGuardada = {
@@ -45,6 +46,7 @@ export function AlineacionesManager({
   jornadasPasadas = new Set<number>(),
   plantillas,
   alineaciones,
+  rivalesPorJornada,
 }: {
   ligaId: number;
   esAdmin: boolean;
@@ -53,6 +55,7 @@ export function AlineacionesManager({
   jornadasPasadas?: Set<number>;
   plantillas: Record<number, JugadorPlantilla[]>;
   alineaciones: AlineacionGuardada[];
+  rivalesPorJornada?: Record<number, Record<number, { nombre: string; escudo: string | null; porEncima: boolean | null } | null>>;
 }) {
   const [jornada, setJornada] = useState<number>(jornadas[0] ?? 1);
   const [miembroId, setMiembroId] = useState<number | null>(miembros[0]?.id ?? null);
@@ -285,18 +288,48 @@ export function AlineacionesManager({
                           {p.nombre.slice(0, 2).toUpperCase()}
                         </div>
                       )}
+                      {p.probabilidad != null && (
+                        <span className="absolute right-0.5 top-0.5 rounded-full bg-primary px-1.5 py-0.5 text-[11px] font-bold text-primary-foreground shadow">
+                          {p.probabilidad}%
+                        </span>
+                      )}
                       {p.escudo && (
                         <img
                           src={p.escudo}
                           alt=""
-                          className="absolute left-0.5 top-0.5 size-5 rounded object-contain bg-white/90 p-0.5 ring-1 ring-border"
+                          className="absolute left-0.5 top-0.5 size-7 rounded object-contain"
                         />
                       )}
-                      {activo && (
-                        <span className="absolute right-0.5 top-0.5 rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
-                          ON
-                        </span>
-                      )}
+                      <div className="absolute bottom-0.5 right-0.5">
+                        {(() => {
+                          const rival = rivalesPorJornada?.[jornada]?.[p.jugador_id];
+                          const fondo =
+                            rival?.porEncima == null
+                              ? "bg-white/20"
+                              : rival.porEncima
+                                ? "bg-red-500/80"
+                                : "bg-emerald-500/80";
+                          return rival?.escudo ? (
+                            <span
+                              className={`flex h-7 min-w-7 items-center justify-center rounded-full shadow ${fondo}`}
+                              title={rival.nombre}
+                            >
+                              <img
+                                src={rival.escudo}
+                                alt=""
+                                className="size-5.5 rounded object-contain"
+                              />
+                            </span>
+                          ) : (
+                            <span
+                              className="flex h-7 min-w-7 items-center justify-center rounded-full bg-white/20 text-[10px] font-bold text-white shadow"
+                              title={rival?.nombre ?? undefined}
+                            >
+                              vs
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </div>
                     <div className="p-1.5">
                       <p className="truncate text-[11px] font-semibold leading-tight">{p.nombre}</p>

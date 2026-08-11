@@ -51,6 +51,8 @@ export default async function AlineacionesPage() {
     { data: partidos },
     { data: alineacionesRaw },
     { data: plantillaRaw },
+    { data: clasificacionRaw },
+    { data: maxJornadaRow },
   ] = await Promise.all([
     supabase
       .schema("liga")
@@ -61,7 +63,9 @@ export default async function AlineacionesPage() {
     supabase.from("jornadas").select("numero").order("numero"),
     supabase
       .from("partidos")
-      .select("jornada:jornadas(numero), resultado_local, resultado_visitante"),
+      .select(
+        "jornada:jornadas(numero), resultado_local, resultado_visitante, local:equipos!local_id(equipo_id, nombre, escudo_url), visitante:equipos!visitante_id(equipo_id, nombre, escudo_url)",
+      ),
     supabase
       .schema("liga")
       .from("liga_alineaciones")
@@ -72,7 +76,23 @@ export default async function AlineacionesPage() {
       .from("v_plantilla")
       .select("miembro_id, jugador_id, jugador, posicion, equipo, clausula")
       .eq("liga_id", ligaId),
+    supabase
+      .from("clasificacion")
+      .select("equipo_id, posicion, jornada")
+      .order("posicion"),
+    supabase
+      .from("clasificacion")
+      .select("jornada")
+      .order("jornada", { ascending: false })
+      .limit(1),
   ]);
+
+  const maxJornadaClas = maxJornadaRow?.[0]?.jornada ?? null;
+  const posicionPorEquipo = new Map<number, number>();
+  for (const c of clasificacionRaw ?? []) {
+    if (maxJornadaClas != null && (c as { jornada?: number }).jornada !== maxJornadaClas) continue;
+    posicionPorEquipo.set(c.equipo_id as number, c.posicion as number);
+  }
 
   const listaMiembros: MiembroAlineaciones[] = (miembros ?? []).map((m) => ({
     id: m.id as number,
@@ -106,11 +126,11 @@ export default async function AlineacionesPage() {
   }));
 
   const ids = (plantillaRaw ?? []).map((p) => p.jugador_id as number);
-  const fotos: Record<number, { foto: string | null; escudo: string | null }> = {};
+  const jugInfo: Record<number, { foto: string | null; escudo: string | null; equipo_id: number | null; probabilidad: number | null }> = {};
   if (ids.length > 0) {
     const { data: jug } = await supabase
       .from("jugadores")
-      .select("jugador_id, foto_url, equipos(escudo_url)")
+      .select("jugador_id, foto_url, probabilidad, equipo_id, equipos(escudo_url)")
       .in("jugador_id", ids);
     const escudoPorId = new Map<number, string | undefined>();
     for (const j of jug ?? []) {
@@ -119,10 +139,37 @@ export default async function AlineacionesPage() {
       escudoPorId.set(j.jugador_id as number, (esc?.escudo_url as string | undefined));
     }
     for (const j of jug ?? []) {
-      fotos[j.jugador_id as number] = {
+      jugInfo[j.jugador_id as number] = {
         foto: (j.foto_url as string) || null,
         escudo: escudoPorId.get(j.jugador_id as number) ?? null,
+        equipo_id: (j.equipo_id as number | null) ?? null,
+        probabilidad: (j.probabilidad as number | null) ?? null,
       };
+    }
+  }
+
+  // Mapa jugador_id -> rival (equipo) por jornada.
+  const rivalesPorJornada: Record<number, Record<number, { nombre: string; escudo: string | null; porEncima: boolean | null } | null>> = {};
+  for (const p of partidos ?? []) {
+    const num =
+      (Array.isArray(p.jornada) ? p.jornada[0] : p.jornada)?.numero ?? null;
+    if (num == null) continue;
+    const local = Array.isArray(p.local) ? p.local[0] : p.local;
+    const visitante = Array.isArray(p.visitante) ? p.visitante[0] : p.visitante;
+    if (!local || !visitante) continue;
+    const posLocal = posicionPorEquipo.get(local.equipo_id as number);
+    const posVisit = posicionPorEquipo.get(visitante.equipo_id as number);
+    for (const [jid, info] of Object.entries(jugInfo)) {
+      if (info.equipo_id == null) continue;
+      let rival: { nombre: string; escudo: string | null; porEncima: boolean | null } | null = null;
+      if (info.equipo_id === (local.equipo_id as number) && posLocal != null && posVisit != null) {
+        rival = { nombre: visitante.nombre as string, escudo: (visitante.escudo_url as string | null) ?? null, porEncima: posVisit < posLocal };
+      } else if (info.equipo_id === (visitante.equipo_id as number) && posLocal != null && posVisit != null) {
+        rival = { nombre: local.nombre as string, escudo: (local.escudo_url as string | null) ?? null, porEncima: posLocal < posVisit };
+      }
+      if (rival == null) continue;
+      if (!rivalesPorJornada[num]) rivalesPorJornada[num] = {};
+      rivalesPorJornada[num][Number(jid)] = rival;
     }
   }
 
@@ -135,9 +182,10 @@ export default async function AlineacionesPage() {
       nombre: p.jugador as string,
       posicion: (p.posicion as string | null) ?? null,
       equipo: (p.equipo as string | null) ?? null,
-      foto: fotos[p.jugador_id as number]?.foto ?? null,
-      escudo: fotos[p.jugador_id as number]?.escudo ?? null,
+      foto: jugInfo[p.jugador_id as number]?.foto ?? null,
+      escudo: jugInfo[p.jugador_id as number]?.escudo ?? null,
       clausula: (p.clausula as number | null) ?? null,
+      probabilidad: jugInfo[p.jugador_id as number]?.probabilidad ?? null,
     });
   }
 
@@ -158,6 +206,7 @@ export default async function AlineacionesPage() {
         jornadasPasadas={jornadasPasadas}
         plantillas={plantillas}
         alineaciones={alineaciones}
+        rivalesPorJornada={rivalesPorJornada}
       />
     </div>
   );
