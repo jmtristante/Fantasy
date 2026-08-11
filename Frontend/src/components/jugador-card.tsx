@@ -230,11 +230,11 @@ export function JugadorCard({
             setDetalleOpen(true);
           }
         }}
-        className="group relative flex w-32 shrink-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg hover:ring-1 hover:ring-emerald-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="group relative flex w-32 shrink-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg hover:ring-1 hover:ring-primary/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        <div className="relative h-24 overflow-hidden bg-gradient-to-b from-emerald-800/90 to-emerald-950">
+        <div className="relative h-24 overflow-hidden bg-gradient-to-b from-slate-100 to-slate-200">
           {foto ? (
-            <img src={foto} alt="" className="h-full w-full object-cover opacity-90 transition duration-300 group-hover:scale-105 group-hover:opacity-100" />
+            <img src={foto} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <Iniciales nombre={nombre} />
@@ -256,7 +256,7 @@ export function JugadorCard({
           {bloqueado && <BloqueoBadge hasta={bloqueadoHasta ?? null} />}
           <LesionBadge lesion={lesion} />
         </div>
-        <div className="flex flex-1 flex-col gap-1 border-t border-emerald-900/10 p-2">
+        <div className="flex flex-1 flex-col gap-1 p-2">
           <span className="truncate text-sm font-semibold transition-colors group-hover:text-primary" title={nombre}>
             {nombre}
           </span>

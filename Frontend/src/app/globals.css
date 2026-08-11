@@ -49,23 +49,23 @@
 }
 
 :root {
-  --background: oklch(0.98 0.012 150);
-  --foreground: oklch(0.18 0.02 155);
+  --background: oklch(0.985 0.003 247);
+  --foreground: oklch(0.21 0.006 257);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 155);
+  --card-foreground: oklch(0.21 0.006 257);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 155);
+  --popover-foreground: oklch(0.21 0.006 257);
   --primary: oklch(0.5 0.14 152);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.95 0.03 150);
-  --secondary-foreground: oklch(0.28 0.05 155);
-  --muted: oklch(0.95 0.015 150);
-  --muted-foreground: oklch(0.48 0.03 155);
-  --accent: oklch(0.94 0.04 150);
-  --accent-foreground: oklch(0.26 0.06 155);
+  --secondary: oklch(0.95 0.01 247);
+  --secondary-foreground: oklch(0.3 0.02 255);
+  --muted: oklch(0.955 0.008 247);
+  --muted-foreground: oklch(0.52 0.02 255);
+  --accent: oklch(0.94 0.02 247);
+  --accent-foreground: oklch(0.3 0.02 255);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.02 150);
-  --input: oklch(0.9 0.02 150);
+  --border: oklch(0.9 0.01 247);
+  --input: oklch(0.9 0.01 247);
   --ring: oklch(0.55 0.13 152);
   --chart-1: oklch(0.5 0.14 152);
   --chart-2: oklch(0.62 0.13 220);
@@ -73,31 +73,31 @@
   --chart-4: oklch(0.68 0.15 25);
   --chart-5: oklch(0.6 0.12 290);
   --radius: 0.75rem;
-  --sidebar: oklch(0.97 0.02 150);
-  --sidebar-foreground: oklch(0.18 0.02 155);
+  --sidebar: oklch(0.98 0.003 247);
+  --sidebar-foreground: oklch(0.21 0.006 257);
   --sidebar-primary: oklch(0.45 0.13 152);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.93 0.04 150);
-  --sidebar-accent-foreground: oklch(0.26 0.06 155);
-  --sidebar-border: oklch(0.9 0.02 150);
+  --sidebar-accent: oklch(0.94 0.02 247);
+  --sidebar-accent-foreground: oklch(0.3 0.02 255);
+  --sidebar-border: oklch(0.9 0.01 247);
   --sidebar-ring: oklch(0.55 0.13 152);
 }
 
 .dark {
-  --background: oklch(0.16 0.02 155);
-  --foreground: oklch(0.96 0.01 150);
-  --card: oklch(0.2 0.025 155);
-  --card-foreground: oklch(0.96 0.01 150);
-  --popover: oklch(0.2 0.025 155);
-  --popover-foreground: oklch(0.96 0.01 150);
+  --background: oklch(0.16 0.008 247);
+  --foreground: oklch(0.96 0.004 247);
+  --card: oklch(0.21 0.01 247);
+  --card-foreground: oklch(0.96 0.004 247);
+  --popover: oklch(0.21 0.01 247);
+  --popover-foreground: oklch(0.96 0.004 247);
   --primary: oklch(0.62 0.14 152);
   --primary-foreground: oklch(0.16 0.02 155);
-  --secondary: oklch(0.27 0.03 155);
-  --secondary-foreground: oklch(0.96 0.01 150);
-  --muted: oklch(0.27 0.03 155);
-  --muted-foreground: oklch(0.72 0.02 155);
-  --accent: oklch(0.3 0.04 155);
-  --accent-foreground: oklch(0.96 0.01 150);
+  --secondary: oklch(0.27 0.01 247);
+  --secondary-foreground: oklch(0.96 0.004 247);
+  --muted: oklch(0.27 0.01 247);
+  --muted-foreground: oklch(0.72 0.01 247);
+  --accent: oklch(0.3 0.015 247);
+  --accent-foreground: oklch(0.96 0.004 247);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
@@ -107,12 +107,12 @@
   --chart-3: oklch(0.78 0.15 95);
   --chart-4: oklch(0.74 0.15 25);
   --chart-5: oklch(0.66 0.12 290);
-  --sidebar: oklch(0.2 0.025 155);
-  --sidebar-foreground: oklch(0.96 0.01 150);
+  --sidebar: oklch(0.21 0.01 247);
+  --sidebar-foreground: oklch(0.96 0.004 247);
   --sidebar-primary: oklch(0.62 0.14 152);
   --sidebar-primary-foreground: oklch(0.16 0.02 155);
-  --sidebar-accent: oklch(0.27 0.03 155);
-  --sidebar-accent-foreground: oklch(0.96 0.01 150);
+  --sidebar-accent: oklch(0.27 0.01 247);
+  --sidebar-accent-foreground: oklch(0.96 0.004 247);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.62 0.14 152);
 }
@@ -125,13 +125,8 @@
     @apply bg-background text-foreground;
     background-image:
       radial-gradient(
-        1200px 600px at 80% -10%,
-        oklch(0.95 0.06 150 / 0.5),
-        transparent 60%
-      ),
-      radial-gradient(
-        800px 400px at -10% 110%,
-        oklch(0.95 0.06 150 / 0.4),
+        1000px 500px at 85% -10%,
+        oklch(0.95 0.02 152 / 0.35),
         transparent 60%
       );
     background-attachment: fixed;

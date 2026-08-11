@@ -104,7 +104,7 @@ export function AppShell({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <div className="flex items-center gap-2 px-2 pt-1">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-md shadow-emerald-900/30">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                   <Trophy className="size-4" />
                 </div>
                 <div className="grid text-left text-sm leading-tight">
