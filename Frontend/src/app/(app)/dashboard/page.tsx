@@ -43,13 +43,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Hola, {user?.email ?? "fantástico"}
-        </h1>
-        <p className="text-muted-foreground">
-          Imagen diaria de tu liga de LaLiga.
-        </p>
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white shadow-lg md:p-8">
+        <div className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-primary/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-10 size-72 rounded-full bg-slate-600/30 blur-3xl" />
+        <div className="relative">
+          <h1 className="font-heading text-4xl tracking-wider md:text-5xl">
+            Hola, {user?.email?.split("@")[0] ?? "fantástico"}
+          </h1>
+          <p className="mt-1 text-slate-300">
+            Imagen diaria de tu liga de LaLiga. Fichajes, cláusulas y rentabilidad
+            de tus jugadores.
+          </p>
+        </div>
       </div>
 
       {!configured && (

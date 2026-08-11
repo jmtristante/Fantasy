@@ -45,7 +45,7 @@ export default async function PlantillasPage() {
     supabase
       .schema("liga")
       .from("ligas")
-      .select("nombre, plantilla_cerrada")
+      .select("nombre")
       .eq("id", ligaId)
       .single(),
     supabase
@@ -125,7 +125,6 @@ export default async function PlantillasPage() {
     <PlantillasManager
       ligaId={ligaId}
       ligaNombre={liga?.nombre ?? "tu liga"}
-      plantillaCerrada={Boolean(liga?.plantilla_cerrada)}
       esAdmin={esAdmin}
       miembros={(miembros ?? []).map((m) => ({ id: m.id as number, nombre: m.nombre as string }))}
       iniciales={iniciales}

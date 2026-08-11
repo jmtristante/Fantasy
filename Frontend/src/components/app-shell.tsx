@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useSyncExternalStore } from "react";
 
 import {
   LayoutDashboard,
@@ -14,6 +16,8 @@ import {
   TrendingUp,
   LogOut,
   Database,
+  Moon,
+  Sun,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -57,7 +61,6 @@ const DATOS_NAV = [
 ];
 
 const LIGA_NAV = [
-  { href: "/ligas", label: "Mis ligas", icon: Users },
   { href: "/miembros", label: "Miembros", icon: Users },
   { href: "/plantillas", label: "Plantillas", icon: Shirt },
   { href: "/mercado", label: "Mercado", icon: Store },
@@ -142,6 +145,9 @@ export function AppShell({
               <UserMenu email={email} onSignOut={handleSignOut} />
             </SidebarMenuItem>
             <SidebarMenuItem>
+              <ThemeToggle />
+            </SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton onClick={handleSignOut}>
                 <LogOut />
                 <span>Cerrar sesión</span>
@@ -151,10 +157,12 @@ export function AppShell({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur-md">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <span className="text-sm text-muted-foreground">Fantasy LaLiga</span>
+          <span className="text-sm font-semibold text-muted-foreground">
+            Fantasy LaLiga
+          </span>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">{children}</main>
       </SidebarInset>
@@ -245,5 +253,24 @@ function NavItem({
         <span>{label}</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
+  );
+}
+
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const dark = mounted && resolvedTheme === "dark";
+  return (
+    <SidebarMenuButton
+      onClick={() => setTheme(dark ? "light" : "dark")}
+      aria-label={dark ? "Activar modo claro" : "Activar modo oscuro"}
+    >
+      {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      <span>{dark ? "Modo claro" : "Modo oscuro"}</span>
+    </SidebarMenuButton>
   );
 }
