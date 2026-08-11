@@ -66,11 +66,17 @@ export default async function RentabilidadPage() {
         .eq("liga_id", ligaId),
       supabase
         .from("v_precio_actual")
-        .select("jugador_id, valor, tendencia, aceleracion_estado"),
+        .select("jugador_id, valor, diferencia, diferencia_pct, tendencia, aceleracion_estado"),
     ]);
 
   const valorPorJugador = new Map(
     (precios ?? []).map((p) => [p.jugador_id as number, p.valor as number | null]),
+  );
+  const diferenciaPorJugador = new Map(
+    (precios ?? []).map((p) => [p.jugador_id as number, p.diferencia as number | null]),
+  );
+  const diferenciaPctPorJugador = new Map(
+    (precios ?? []).map((p) => [p.jugador_id as number, p.diferencia_pct as number | null]),
   );
   const tendenciaPorJugador = new Map(
     (precios ?? []).map((p) => [p.jugador_id as number, p.tendencia as number | null]),
@@ -188,6 +194,8 @@ export default async function RentabilidadPage() {
       subidas: s.subidas,
       ventas: s.ventas,
       valor_actual: enPlantilla ? valorPorJugador.get(jugadorId) ?? null : null,
+      diferencia_diaria: diferenciaPorJugador.get(jugadorId) ?? null,
+      diferencia_pct_diaria: diferenciaPctPorJugador.get(jugadorId) ?? null,
       tendencia: tendenciaPorJugador.get(jugadorId) ?? null,
       aceleracion_estado: acelEstadoPorJugador.get(jugadorId) ?? null,
       en_plantilla: enPlantilla,

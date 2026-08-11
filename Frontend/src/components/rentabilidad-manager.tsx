@@ -28,6 +28,8 @@ export type FilaJugador = {
   subidas: number;
   ventas: number;
   valor_actual: number | null;
+  diferencia_diaria: number | null;
+  diferencia_pct_diaria: number | null;
   tendencia: number | null;
   aceleracion_estado?: string | null;
   en_plantilla: boolean;
@@ -210,6 +212,7 @@ export function RentabilidadManager({
                       <TableHead className="text-right">Subidas</TableHead>
                       <TableHead className="text-right">Ventas</TableHead>
                       <TableHead className="text-right">Valor actual</TableHead>
+                      <TableHead className="text-right">Hoy</TableHead>
                       <TableHead className="text-right">Invertido</TableHead>
                       <TableHead className="text-right">Devuelto</TableHead>
                       <TableHead className="text-right">Rentabilidad</TableHead>
@@ -281,6 +284,34 @@ export function RentabilidadManager({
                           </TableCell>
                           <TableCell className="text-right tabular-nums">
                             {formatValor(f.valor_actual)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {f.diferencia_diaria != null ? (
+                              <span
+                                className={`font-semibold tabular-nums ${
+                                  f.diferencia_diaria > 0
+                                    ? "text-emerald-600"
+                                    : f.diferencia_diaria < 0
+                                      ? "text-red-600"
+                                      : "text-muted-foreground"
+                                }`}
+                              >
+                                {f.diferencia_diaria > 0
+                                  ? "▲"
+                                  : f.diferencia_diaria < 0
+                                    ? "▼"
+                                    : "±"}{" "}
+                                {formatValor(Math.abs(f.diferencia_diaria))}
+                                {f.diferencia_pct_diaria != null ? (
+                                  <span className="ml-1 text-xs text-muted-foreground">
+                                    {f.diferencia_pct_diaria > 0 ? "+" : ""}
+                                    {f.diferencia_pct_diaria.toFixed(2)}%
+                                  </span>
+                                ) : null}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right tabular-nums">
                             {formatValor(f.invertido)}
