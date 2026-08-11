@@ -214,6 +214,9 @@ export default async function RentabilidadPage() {
       (acc, f) => ({ invertido: acc.invertido + f.invertido, devuelto: acc.devuelto + f.devuelto }),
       { invertido: 0, devuelto: 0 },
     );
+    const subidaHoy = filas
+      .filter((f) => f.en_plantilla)
+      .reduce((acc, f) => acc + (f.diferencia_diaria ?? 0), 0);
     return {
       id: m.id as number,
       nombre: m.nombre as string,
@@ -222,6 +225,7 @@ export default async function RentabilidadPage() {
       invertido: totales.invertido,
       devuelto: totales.devuelto,
       rentabilidad: totales.devuelto - totales.invertido,
+      subida_hoy: subidaHoy,
     } satisfies ResumenMiembro;
   });
 

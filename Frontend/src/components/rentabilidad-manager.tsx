@@ -46,6 +46,7 @@ export type ResumenMiembro = {
   invertido: number;
   devuelto: number;
   rentabilidad: number;
+  subida_hoy: number;
 };
 
 function pctTexto(invertido: number, rentabilidad: number): string | null {
@@ -195,6 +196,21 @@ export function RentabilidadManager({
                   >
                     {r.rentabilidad > 0 ? "+" : ""}
                     {formatValor(r.rentabilidad)}
+                  </b>
+                </span>
+                <span className="text-muted-foreground">
+                  Subida de hoy:{" "}
+                  <b
+                    className={
+                      r.subida_hoy > 0
+                        ? "text-emerald-600"
+                        : r.subida_hoy < 0
+                          ? "text-red-600"
+                          : "text-foreground"
+                    }
+                  >
+                    {r.subida_hoy > 0 ? "+" : ""}
+                    {formatValor(r.subida_hoy)}
                   </b>
                 </span>
               </div>
