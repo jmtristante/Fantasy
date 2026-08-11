@@ -70,7 +70,7 @@ export function RentabilidadManager({
   resumen: ResumenMiembro[];
 }) {
   const [filtro, setFiltro] = useState<number | null>(resumen[0]?.id ?? null);
-  const [soloPlantilla, setSoloPlantilla] = useState(false);
+  const [soloPlantilla, setSoloPlantilla] = useState(true);
   const [detalle, setDetalle] = useState<FilaJugador | null>(null);
 
   const visibles = (filtro == null ? resumen : resumen.filter((r) => r.id === filtro))
@@ -208,11 +208,11 @@ export function RentabilidadManager({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Jugador</TableHead>
+                      <TableHead className="text-right">Hoy</TableHead>
                       <TableHead className="text-right">Fichaje</TableHead>
                       <TableHead className="text-right">Subidas</TableHead>
                       <TableHead className="text-right">Ventas</TableHead>
                       <TableHead className="text-right">Valor actual</TableHead>
-                      <TableHead className="text-right">Hoy</TableHead>
                       <TableHead className="text-right">Invertido</TableHead>
                       <TableHead className="text-right">Devuelto</TableHead>
                       <TableHead className="text-right">Rentabilidad</TableHead>
@@ -273,18 +273,6 @@ export function RentabilidadManager({
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {formatValor(f.fichaje)}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {formatValor(f.subidas)}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {formatValor(f.ventas)}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {formatValor(f.valor_actual)}
-                          </TableCell>
                           <TableCell className="text-right">
                             {f.diferencia_diaria != null ? (
                               <span
@@ -312,6 +300,18 @@ export function RentabilidadManager({
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatValor(f.fichaje)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatValor(f.subidas)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatValor(f.ventas)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatValor(f.valor_actual)}
                           </TableCell>
                           <TableCell className="text-right tabular-nums">
                             {formatValor(f.invertido)}
