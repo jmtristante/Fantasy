@@ -289,8 +289,8 @@ export function AlineacionesManager({
                         </div>
                       )}
                       {p.probabilidad != null && (
-                        <span className="absolute right-0.5 top-0.5 rounded-full bg-primary px-1.5 py-0.5 text-[11px] font-bold text-primary-foreground shadow">
-                          {p.probabilidad}%
+                        <span className="absolute right-0.5 top-0.5 rounded-full bg-primary px-1.5 py-0.5 text-sm font-bold text-primary-foreground shadow">
+                          {p.probabilidad}
                         </span>
                       )}
                       {p.escudo && (
@@ -307,22 +307,22 @@ export function AlineacionesManager({
                             rival?.porEncima == null
                               ? "bg-white/20"
                               : rival.porEncima
-                                ? "bg-red-500/80"
-                                : "bg-emerald-500/80";
+                                ? "bg-red-600/90"
+                                : "bg-emerald-600/90";
                           return rival?.escudo ? (
                             <span
-                              className={`flex h-7 min-w-7 items-center justify-center rounded-full shadow ${fondo}`}
+                              className={`flex h-8 min-w-8 items-center justify-center rounded-full shadow ${fondo}`}
                               title={rival.nombre}
                             >
                               <img
                                 src={rival.escudo}
                                 alt=""
-                                className="size-5.5 rounded object-contain"
+                                className="size-6 rounded object-contain"
                               />
                             </span>
                           ) : (
                             <span
-                              className="flex h-7 min-w-7 items-center justify-center rounded-full bg-white/20 text-[10px] font-bold text-white shadow"
+                              className="flex h-8 min-w-8 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white shadow"
                               title={rival?.nombre ?? undefined}
                             >
                               vs

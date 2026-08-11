@@ -133,8 +133,9 @@ export default async function MiembrosPage({
         </div>
       )}
 
-      <div className="rounded-lg border">
-        <Table>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
@@ -203,7 +204,8 @@ export default async function MiembrosPage({
             ) : null}
           </TableBody>
         </Table>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

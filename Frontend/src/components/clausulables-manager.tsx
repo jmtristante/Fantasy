@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
 
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -160,8 +160,9 @@ export function ClausulablesManager({
             : "Tu liga aún no tiene jugadores con dueño."}
         </Card>
       ) : (
-        <div className="rounded-lg border">
-          <Table>
+        <Card>
+          <CardContent className="p-0">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Jugador</TableHead>
@@ -296,7 +297,8 @@ export function ClausulablesManager({
               ))}
             </TableBody>
           </Table>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {detalle != null && (

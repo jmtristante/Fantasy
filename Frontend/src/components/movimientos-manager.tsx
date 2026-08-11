@@ -56,14 +56,14 @@ const TIPO_LABEL: Record<string, string> = {
 };
 
 const DOT_COLOR: Record<string, string> = {
-  compra_mercado: "bg-emerald-500",
-  venta_mercado: "bg-red-500",
+  compra_mercado: "bg-emerald-600",
+  venta_mercado: "bg-red-600",
   subida_clausula: "bg-blue-500",
   blindaje: "bg-orange-500",
   clausula: "bg-purple-500",
   pago_jornada: "bg-amber-500",
-  entrada: "bg-green-500",
-  salida: "bg-red-400",
+  entrada: "bg-emerald-600",
+  salida: "bg-red-600",
   ajuste: "bg-zinc-400",
 };
 
