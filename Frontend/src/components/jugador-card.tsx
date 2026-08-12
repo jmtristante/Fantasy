@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatValor } from "@/lib/format";
+import { banderaUrl, formatValor } from "@/lib/format";
 import { JugadorDetalleSheet } from "@/components/jugador-detalle";
 
 export type CardJugador = {
@@ -13,6 +13,7 @@ export type CardJugador = {
   nombre: string;
   posicion: string | null;
   equipo: string | null;
+  nacionalidad?: string | null;
   foto: string | null;
   escudo: string | null;
   valor: number | null;
@@ -257,9 +258,19 @@ export function JugadorCard({
           <LesionBadge lesion={lesion} />
         </div>
         <div className="flex flex-1 flex-col gap-1 p-2">
-          <span className="truncate text-sm font-semibold transition-colors group-hover:text-primary" title={nombre}>
-            {nombre}
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="truncate text-sm font-semibold transition-colors group-hover:text-primary" title={nombre}>
+              {nombre}
+            </span>
+            {banderaUrl(jugador.nacionalidad) && (
+              <img
+                src={banderaUrl(jugador.nacionalidad)}
+                alt={jugador.nacionalidad ?? ""}
+                title={jugador.nacionalidad ?? undefined}
+                className="h-3 w-auto shrink-0 rounded-[2px]"
+              />
+            )}
+          </div>
           <span className="truncate text-[11px] text-muted-foreground">
             {posicion ?? "—"}
             {equipo ? ` · ${equipo}` : ""}

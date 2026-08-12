@@ -82,6 +82,7 @@ export default async function MercadoPage({
     jerarquia?: string | null;
     probabilidad?: number | null;
     lesion?: string | null;
+    nacionalidad?: string | null;
     equipos: { nombre: string; escudo_url: string } | { nombre: string; escudo_url: string }[] | null;
   }[] = [];
   let precios: {
@@ -95,7 +96,7 @@ export default async function MercadoPage({
       supabase
         .from("jugadores")
         .select(
-          "jugador_id, nombre, posicion, foto_url, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
+          "jugador_id, nombre, posicion, foto_url, nacionalidad, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
         )
         .in("jugador_id", ids),
       supabase
@@ -114,6 +115,7 @@ export default async function MercadoPage({
       foto: string | null;
       equipo: string | null;
       escudo: string | null;
+      nacionalidad?: string | null;
       estado?: string | null;
       jerarquia?: string | null;
       probabilidad?: number | null;
@@ -129,6 +131,7 @@ export default async function MercadoPage({
       foto: j.foto_url || null,
       equipo: eq?.nombre ?? null,
       escudo: (eq?.escudo_url as string | undefined) ?? null,
+      nacionalidad: j.nacionalidad ?? null,
       estado: j.estado ?? null,
       jerarquia: j.jerarquia ?? null,
       probabilidad: j.probabilidad ?? null,
@@ -147,6 +150,7 @@ export default async function MercadoPage({
       posicion: j?.posicion ?? null,
       equipo: j?.equipo ?? null,
       foto: j?.foto ?? null,
+      nacionalidad: j?.nacionalidad ?? null,
       escudo: j?.escudo ?? null,
       valor: p?.valor ?? null,
       tendencia: p?.tendencia ?? null,

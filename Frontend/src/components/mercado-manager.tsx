@@ -57,7 +57,7 @@ export function MercadoManager({
         supabase
           .from("jugadores")
           .select(
-            "jugador_id, nombre, posicion, foto_url, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
+            "jugador_id, nombre, posicion, foto_url, nacionalidad, estado, jerarquia, probabilidad, lesion, equipos(nombre, escudo_url)",
           )
           .order("nombre"),
         supabase.from("v_precio_actual").select("jugador_id, valor, tendencia, aceleracion_estado"),
@@ -86,6 +86,7 @@ export function MercadoManager({
           nombre: j.nombre as string,
           posicion: (j.posicion as string | null) ?? null,
           equipo: e?.nombre ?? null,
+          nacionalidad: (j.nacionalidad as string | null) ?? null,
           foto: (j.foto_url as string) || null,
           escudo: (e?.escudo_url as string | undefined) ?? null,
           valor: p?.valor ?? null,

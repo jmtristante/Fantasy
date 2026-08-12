@@ -66,13 +66,13 @@ export default async function PlantillasPage() {
   const ids = (plantillaRaw ?? []).map((p) => p.jugador_id as number);
   let fotos: Record<
     number,
-    { foto: string | null; escudo: string | null; estado: string | null; jerarquia: string | null; probabilidad: number | null; lesion: string | null }
+    { foto: string | null; escudo: string | null; nacionalidad: string | null; estado: string | null; jerarquia: string | null; probabilidad: number | null; lesion: string | null }
   > = {};
   if (ids.length > 0) {
     const { data: jug } = await supabase
       .from("jugadores")
       .select(
-        "jugador_id, foto_url, estado, jerarquia, probabilidad, lesion, equipos(escudo_url)",
+        "jugador_id, foto_url, nacionalidad, estado, jerarquia, probabilidad, lesion, equipos(escudo_url)",
       )
       .in("jugador_id", ids);
     const escudoPorId = new Map<number, string | undefined>();
@@ -81,11 +81,12 @@ export default async function PlantillasPage() {
       const esc = Array.isArray(e) ? e[0] : e;
       escudoPorId.set(j.jugador_id as number, (esc?.escudo_url as string | undefined));
     }
-    fotos = (jug ?? []).reduce<Record<number, { foto: string | null; escudo: string | null; estado: string | null; jerarquia: string | null; probabilidad: number | null; lesion: string | null }>>(
+    fotos = (jug ?? []).reduce<Record<number, { foto: string | null; escudo: string | null; nacionalidad: string | null; estado: string | null; jerarquia: string | null; probabilidad: number | null; lesion: string | null }>>(
       (acc, j) => {
         acc[j.jugador_id as number] = {
           foto: (j.foto_url as string) || null,
           escudo: escudoPorId.get(j.jugador_id as number) ?? null,
+          nacionalidad: (j.nacionalidad as string | null) ?? null,
           estado: (j.estado as string | null) ?? null,
           jerarquia: (j.jerarquia as string | null) ?? null,
           probabilidad: (j.probabilidad as number | null) ?? null,
@@ -108,6 +109,7 @@ export default async function PlantillasPage() {
       equipo: (p.equipo as string | null) ?? null,
       foto: f?.foto ?? null,
       escudo: f?.escudo ?? null,
+      nacionalidad: f?.nacionalidad ?? null,
       valor: (p.valor_mercado as number | null) ?? null,
       clausula: (p.clausula as number | null) ?? null,
       tendencia: (p.tendencia as number | null) ?? null,
