@@ -362,85 +362,26 @@ export function MovimientosManager({
     const sellerIs = vendedor !== LALIGA;
     setOcupadoMercado(true);
     const supabase = createBrowserClient();
-    const ops: Array<PromiseLike<unknown>> = [];
-    if (buyerIs) {
-      ops.push(
-        supabase
-          .schema("liga")
-          .from("movimientos")
-          .insert({
-            liga_id: ligaId,
-            fecha,
-            miembro_id: comprador,
-            tipo: "compra_mercado",
-            jugador_id: jugadorMercado.jugador_id,
-            importe: -precioNum,
-            contraparte: sellerIs ? vendedor : null,
-            nota: `Compra de ${jugadorMercado.nombre}${sellerIs ? ` a ${miembros.find((m) => m.id === vendedor)?.nombre ?? "un amigo"}` : " a LaLiga"}`,
-          })
-          .then((r) => r.error),
-      );
-    }
-    if (sellerIs) {
-      ops.push(
-        supabase
-          .schema("liga")
-          .from("movimientos")
-          .insert({
-            liga_id: ligaId,
-            fecha,
-            miembro_id: vendedor,
-            tipo: "venta_mercado",
-            jugador_id: jugadorMercado.jugador_id,
-            importe: precioNum,
-            contraparte: buyerIs ? comprador : null,
-            nota: `Venta de ${jugadorMercado.nombre}${buyerIs ? ` a ${miembros.find((m) => m.id === comprador)?.nombre ?? "un amigo"}` : " a LaLiga"}`,
-          })
-          .then((r) => r.error),
-      );
-    }
-    if (sellerIs) {
-      ops.push(
-        supabase
-          .schema("liga")
-          .from("plantillas")
-          .delete()
-          .eq("liga_id", ligaId)
-          .eq("jugador_id", jugadorMercado.jugador_id)
-          .then((r) => r.error),
-      );
-    }
-    if (buyerIs) {
-      ops.push(
-        supabase
-          .schema("liga")
-          .from("plantillas")
-          .insert({
-            liga_id: ligaId,
-            miembro_id: comprador,
-            jugador_id: jugadorMercado.jugador_id,
-          })
-          .then((r) => r.error),
-      );
-      ops.push(
-        supabase
-          .schema("liga")
-          .from("clausulas_historial")
-          .insert({
-            liga_id: ligaId,
-            jugador_id: jugadorMercado.jugador_id,
-            miembro_id: comprador,
-            valor: precioNum,
-            motivo: "compra_mercado",
-          })
-          .then((r) => r.error),
-      );
-    }
-    const resultados = await Promise.all(ops);
+    const notaCompra = buyerIs
+      ? `Compra de ${jugadorMercado.nombre}${sellerIs ? ` a ${miembros.find((m) => m.id === vendedor)?.nombre ?? "un amigo"}` : " a LaLiga"}`
+      : null;
+    const notaVenta = sellerIs
+      ? `Venta de ${jugadorMercado.nombre}${buyerIs ? ` a ${miembros.find((m) => m.id === comprador)?.nombre ?? "un amigo"}` : " a LaLiga"}`
+      : null;
+
+    const { error } = await supabase.rpc("registrar_operacion_mercado", {
+      p_liga_id: ligaId,
+      p_fecha: fecha,
+      p_comprador: comprador,
+      p_vendedor: vendedor,
+      p_jugador_id: jugadorMercado.jugador_id,
+      p_precio: precioNum,
+      p_nota_compra: notaCompra,
+      p_nota_venta: notaVenta,
+    });
     setOcupadoMercado(false);
-    const error = resultados.find((e) => e != null) as { message?: string } | undefined;
     if (error) {
-      toast.error(`No se pudo registrar la operación: ${error?.message ?? "error"}`);
+      toast.error(`No se pudo registrar la operación: ${error.message}`);
       router.refresh();
       return;
     }
