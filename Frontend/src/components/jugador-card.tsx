@@ -58,6 +58,26 @@ export function IndicadorMovimientoBadge({
   const verde = v >= 0;
 
   if (!estado) {
+    if (v > 0) {
+      return (
+        <Badge
+          className="px-1.5 py-0 text-[11px] shadow bg-emerald-600/90 text-white"
+          title="Sube"
+        >
+          <ArrowUp className="size-3" />
+        </Badge>
+      );
+    }
+    if (v < 0) {
+      return (
+        <Badge
+          className="px-1.5 py-0 text-[11px] shadow bg-red-600/90 text-white"
+          title="Baja"
+        >
+          <ArrowDown className="size-3" />
+        </Badge>
+      );
+    }
     return (
       <Badge
         className="px-1.5 py-0 text-[11px] shadow bg-muted text-muted-foreground"

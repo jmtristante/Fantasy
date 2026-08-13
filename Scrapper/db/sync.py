@@ -189,6 +189,12 @@ def sync_partidos(cur, partidos, temporada_label):
 
 def sync_precios(cur, precios):
     for precio in precios:
+        # Si el sitio no aporta tendencia (p.ej. scrapeo de equipos, que la
+        # deja a NULL), la derivamos del signo del cambio de precio para que el
+        # icono de subida/bajada en las tarjetas de jugador se actualice.
+        if precio.get("tendencia") is None and precio.get("diferencia") is not None:
+            d = precio["diferencia"]
+            precio = {**precio, "tendencia": 1 if d > 0 else -1 if d < 0 else 0}
         fecha = _madrid_naive(precio.get("fecha"))
         cur.execute(
             """
