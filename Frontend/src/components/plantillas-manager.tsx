@@ -13,6 +13,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { JugadorCard, type CardJugador } from "@/components/jugador-card";
 import { createBrowserClient } from "@/lib/supabase/client";
 
+// Cláusula por defecto al armar la plantilla inicial: 66,6% por encima del valor de mercado.
+function clausulaInicial(valor: number | null | undefined): number | null {
+  if (valor == null) return null;
+  return Math.round(valor * 1.666);
+}
+
 type EntradaPlantilla = {
   miembro_id: number;
   miembro: string;
@@ -144,7 +150,7 @@ export function PlantillasManager({
   async function asignar(c: CardJugador) {
     if (seleccionado == null) return;
     const miembro = miembros.find((m) => m.id === seleccionado);
-    const clausula = Number(clausulas[c.jugador_id] ?? c.valor ?? 0);
+    const clausula = Number(clausulas[c.jugador_id] ?? clausulaInicial(c.valor) ?? 0);
     setAsignando(c.jugador_id);
     const supabase = createBrowserClient();
     const { error: errorP } = await supabase.schema("liga").from("plantillas").insert({
@@ -375,7 +381,7 @@ export function PlantillasManager({
                       className="h-8 text-xs"
                       placeholder="Cláusula"
                       aria-label={`Cláusula para ${c.nombre}`}
-                      value={clausulas[c.jugador_id] ?? c.valor ?? ""}
+                      value={clausulas[c.jugador_id] ?? clausulaInicial(c.valor) ?? ""}
                       onChange={(ev) =>
                         setClausulas((prev) => ({ ...prev, [c.jugador_id]: ev.target.value }))
                       }

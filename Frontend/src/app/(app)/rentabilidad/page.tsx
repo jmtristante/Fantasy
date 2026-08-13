@@ -56,7 +56,7 @@ export default async function RentabilidadPage() {
       supabase
         .schema("liga")
         .from("clausulas_historial")
-        .select("miembro_id, jugador_id, valor")
+        .select("miembro_id, jugador_id, valor, fecha")
         .eq("liga_id", ligaId)
         .eq("motivo", "draft_inicial"),
       supabase
@@ -125,13 +125,39 @@ export default async function RentabilidadPage() {
     }
   }
 
-  // Fichaje de los jugadores asignados en la plantilla inicial (valor del primer
-  // día). No generan movimiento, solo clausulas_historial con motivo draft_inicial.
+  // Fichaje de los jugadores asignados en la plantilla inicial: se contabiliza
+  // como su valor de mercado en la fecha en que entraron al equipo, no como la
+  // cláusula con la que se dieron de alta.
+  const precioEntradaPorJugador = new Map<number, number>();
+  if ((drafts ?? []).length > 0) {
+    const preciosEntrada = await Promise.all(
+      (drafts ?? []).map((d) =>
+        d.fecha == null
+          ? Promise.resolve(undefined)
+          : supabase
+              .from("precios_diarios")
+              .select("valor")
+              .eq("jugador_id", d.jugador_id as number)
+              .lte("fecha", d.fecha as string)
+              .order("fecha", { ascending: false })
+              .limit(1)
+              .then((r) => (r.data?.[0]?.valor as number | undefined) ?? undefined),
+      ),
+    );
+    (drafts ?? []).forEach((d, i) => {
+      const v = preciosEntrada[i];
+      if (v != null) precioEntradaPorJugador.set(d.jugador_id as number, v);
+    });
+  }
   for (const d of drafts ?? []) {
     if (d.miembro_id == null || d.jugador_id == null) continue;
     const s = stub(d.miembro_id as number, d.jugador_id as number);
-    s.invertido += d.valor as number;
-    s.fichaje += d.valor as number;
+    const valorMercado =
+      precioEntradaPorJugador.get(d.jugador_id as number) ??
+      valorPorJugador.get(d.jugador_id as number) ??
+      0;
+    s.invertido += valorMercado;
+    s.fichaje += valorMercado;
   }
 
   // Valor actual: si el jugador sigue en plantilla del miembro.
