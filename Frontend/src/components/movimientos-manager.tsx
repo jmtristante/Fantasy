@@ -369,16 +369,18 @@ export function MovimientosManager({
       ? `Venta de ${jugadorMercado.nombre}${buyerIs ? ` a ${miembros.find((m) => m.id === comprador)?.nombre ?? "un amigo"}` : " a LaLiga"}`
       : null;
 
-    const { error } = await supabase.rpc("registrar_operacion_mercado", {
-      p_liga_id: ligaId,
-      p_fecha: fecha,
-      p_comprador: comprador,
-      p_vendedor: vendedor,
-      p_jugador_id: jugadorMercado.jugador_id,
-      p_precio: precioNum,
-      p_nota_compra: notaCompra,
-      p_nota_venta: notaVenta,
-    });
+    const { error } = await supabase
+      .schema("liga")
+      .rpc("registrar_operacion_mercado", {
+        p_liga_id: ligaId,
+        p_fecha: fecha,
+        p_comprador: comprador,
+        p_vendedor: vendedor,
+        p_jugador_id: jugadorMercado.jugador_id,
+        p_precio: precioNum,
+        p_nota_compra: notaCompra,
+        p_nota_venta: notaVenta,
+      });
     setOcupadoMercado(false);
     if (error) {
       toast.error(`No se pudo registrar la operación: ${error.message}`);
