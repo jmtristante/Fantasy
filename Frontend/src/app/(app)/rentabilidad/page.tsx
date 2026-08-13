@@ -44,15 +44,14 @@ export default async function RentabilidadPage() {
       supabase
         .schema("liga")
         .from("miembros")
-        .select("id, nombre, foto_url")
+        .select("id, nombre, foto_url, presupuesto_inicial")
         .eq("liga_id", ligaId)
         .order("nombre"),
       supabase
         .schema("liga")
         .from("movimientos")
-        .select("tipo, importe, miembro_id, jugador_id")
-        .eq("liga_id", ligaId)
-        .not("jugador_id", "is", null),
+        .select("tipo, importe, miembro_id, jugador_id, fecha")
+        .eq("liga_id", ligaId),
       supabase
         .schema("liga")
         .from("clausulas_historial")
@@ -62,7 +61,7 @@ export default async function RentabilidadPage() {
       supabase
         .schema("liga")
         .from("plantillas")
-        .select("miembro_id, jugador_id")
+        .select("miembro_id, jugador_id, desde")
         .eq("liga_id", ligaId),
       supabase
         .from("v_precio_actual")
@@ -255,5 +254,147 @@ export default async function RentabilidadPage() {
     } satisfies ResumenMiembro;
   });
 
-  return <RentabilidadManager resumen={resumen} />;
+  // Serie historica: patrimonio de cada amigo dia a dia = valoracion de su
+  // equipo (suma del valor de mercado de los jugadores que tiene ese dia) mas
+  // el dinero en mano (presupuesto inicial + movimientos acumulados hasta el dia).
+  const VENTANA_DIAS = 56;
+  const inicioISO = new Date(
+    Date.now() - VENTANA_DIAS * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  const toDayStart = (f: string | Date) => {
+    const d = new Date(f);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  };
+
+  // Altas/bajas por (miembro, jugador) para saber que equipo tenia cada dia.
+  type Hold = { j: number; acq: number; sale: number | null };
+  const holds = new Map<string, Hold>();
+  const setHold = (m: number | null, j: number | null, kind: "acq" | "sale", ts: number) => {
+    if (m == null || j == null) return;
+    const k = `${m}:${j}`;
+    let h = holds.get(k);
+    if (!h) {
+      h = { j, acq: Infinity, sale: null };
+      holds.set(k, h);
+    }
+    if (kind === "acq") {
+      if (ts < h.acq) h.acq = ts;
+    } else if (h.sale == null || ts > h.sale) {
+      h.sale = ts;
+    }
+  };
+  for (const d of drafts ?? []) {
+    setHold(d.miembro_id, d.jugador_id, "acq", toDayStart(d.fecha as string));
+  }
+  for (const mv of movimientos ?? []) {
+    const ts = toDayStart(mv.fecha as string);
+    if ((mv.importe as number) < 0) setHold(mv.miembro_id, mv.jugador_id, "acq", ts);
+    else if ((mv.importe as number) > 0) setHold(mv.miembro_id, mv.jugador_id, "sale", ts);
+  }
+  // En plantilla sin movimiento conocido (p.ej. comprado al banco): alta = 'desde'.
+  for (const p of plantillas ?? []) {
+    const k = `${p.miembro_id}:${p.jugador_id}`;
+    if (!holds.has(k) && p.miembro_id != null && p.jugador_id != null) {
+      holds.set(k, {
+        j: p.jugador_id as number,
+        acq: toDayStart(p.desde as string),
+        sale: null,
+      });
+    }
+  }
+
+  // Cash acumulado por amigo: presupuesto inicial + importes de movimientos.
+  const presu = new Map<number, number>();
+  for (const m of miembros ?? []) presu.set(m.id as number, (m.presupuesto_inicial as number) ?? 0);
+  const importesPorMiembro = new Map<number, { ts: number; imp: number }[]>();
+  for (const mv of movimientos ?? []) {
+    if (mv.miembro_id == null) continue;
+    const arr = importesPorMiembro.get(mv.miembro_id as number) ?? [];
+    arr.push({ ts: toDayStart(mv.fecha as string), imp: mv.importe as number });
+    importesPorMiembro.set(mv.miembro_id as number, arr);
+  }
+  for (const arr of importesPorMiembro.values()) arr.sort((a, b) => a.ts - b.ts);
+
+  // Precios diarios de los jugadores que han pasado por algun equipo.
+  const jugadorIds = [...new Set([...holds.values()].map((h) => h.j))];
+  let serieRentabilidad: {
+    fechas: string[];
+    amigos: { id: number; nombre: string; datos: (number | null)[] }[];
+  } = { fechas: [], amigos: [] };
+  if (jugadorIds.length > 0) {
+    const { data: preciosDiarios } = await supabase
+      .from("precios_diarios")
+      .select("jugador_id, fecha, valor")
+      .in("jugador_id", jugadorIds)
+      .gte("fecha", inicioISO)
+      .order("fecha");
+    const preciosPorDia = new Map<string, Map<number, number>>();
+    const diasArr: { ts: number; label: string }[] = [];
+    const vistos = new Set<string>();
+    for (const pd of preciosDiarios ?? []) {
+      const d = new Date(pd.fecha as string);
+      const label = `${d.getDate().toString().padStart(2, "0")}/${(
+        d.getMonth() + 1
+      ).toString().padStart(2, "0")}`;
+      if (!vistos.has(label)) {
+        vistos.add(label);
+        diasArr.push({ ts: toDayStart(d), label });
+      }
+      let m = preciosPorDia.get(label);
+      if (!m) {
+        m = new Map();
+        preciosPorDia.set(label, m);
+      }
+      m.set(pd.jugador_id as number, pd.valor as number);
+    }
+    const hoy = new Date();
+    const hoyLabel = `${hoy.getDate().toString().padStart(2, "0")}/${(
+      hoy.getMonth() + 1
+    ).toString().padStart(2, "0")}`;
+    if (diasArr.length === 0 || diasArr[diasArr.length - 1].label !== hoyLabel) {
+      diasArr.push({ ts: toDayStart(hoy), label: hoyLabel });
+    }
+    diasArr.sort((a, b) => a.ts - b.ts);
+    const fechas = diasArr.map((x) => x.label);
+    serieRentabilidad = {
+      fechas,
+      amigos: (miembros ?? []).map((m) => {
+        const mid = m.id as number;
+        const importes = importesPorMiembro.get(mid) ?? [];
+        const ultimo = new Map<number, number>();
+        for (const h of holds.values()) {
+          if (h.j != null && `${mid}:${h.j}`.startsWith(`${mid}:`)) {
+            ultimo.set(h.j, valorPorJugador.get(h.j) ?? 0);
+          }
+        }
+        return {
+          id: mid,
+          nombre: m.nombre as string,
+          datos: diasArr.map((dia) => {
+            let cash = presu.get(mid) ?? 0;
+            for (const it of importes) {
+              if (it.ts <= dia.ts) cash += it.imp;
+              else break;
+            }
+            let equipo = 0;
+            for (const [k, h] of holds) {
+              if (!k.startsWith(`${mid}:`)) continue;
+              if (dia.ts < h.acq) continue;
+              if (h.sale != null && dia.ts >= h.sale) continue;
+              const pm = preciosPorDia.get(dia.label);
+              const p =
+                dia.label === hoyLabel
+                  ? (valorPorJugador.get(h.j) ?? pm?.get(h.j) ?? 0)
+                  : (pm?.get(h.j) ?? ultimo.get(h.j) ?? 0);
+              ultimo.set(h.j, p);
+              equipo += p;
+            }
+            return cash + equipo;
+          }),
+        };
+      }),
+    };
+  }
+
+  return <RentabilidadManager resumen={resumen} serieRentabilidad={serieRentabilidad} />;
 }

@@ -17,6 +17,16 @@ import { MiembroAvatar } from "@/components/miembro-avatar";
 import { formatValor } from "@/lib/format";
 import { JugadorDetalleSheet } from "@/components/jugador-detalle";
 import { IndicadorMovimientoBadge, type CardJugador } from "@/components/jugador-card";
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 export type FilaJugador = {
   jugador_id: number;
@@ -36,6 +46,8 @@ export type FilaJugador = {
   invertido: number;
   devuelto: number;
   rentabilidad: number;
+  miembro_id?: number | null;
+  miembro_nombre?: string | null;
 };
 
 export type ResumenMiembro = {
@@ -55,6 +67,21 @@ function pctTexto(invertido: number, rentabilidad: number): string | null {
   return `${v >= 0 ? "+" : ""}${v.toFixed(0)}%`;
 }
 
+const COLORES_AMIGOS = [
+  "#2563eb",
+  "#dc2626",
+  "#16a34a",
+  "#d97706",
+  "#9333ea",
+  "#0891b2",
+  "#db2777",
+  "#65a30d",
+  "#ea580c",
+  "#0d9488",
+  "#4f46e5",
+  "#be123c",
+];
+
 // Positivos a la izquierda (arriba), negativos a la derecha (abajo).
 function ordenarFilas(filas: FilaJugador[]): FilaJugador[] {
   return [...filas].sort((a, b) => {
@@ -67,26 +94,84 @@ function ordenarFilas(filas: FilaJugador[]): FilaJugador[] {
 
 export function RentabilidadManager({
   resumen,
+  serieRentabilidad,
 }: {
   resumen: ResumenMiembro[];
+  serieRentabilidad?: {
+    fechas: string[];
+    amigos: { id: number; nombre: string; datos: (number | null)[] }[];
+  };
 }) {
-  const [filtro, setFiltro] = useState<number | null>(resumen[0]?.id ?? null);
+  const [filtro, setFiltro] = useState<number | null>(null);
   const [soloPlantilla, setSoloPlantilla] = useState(true);
   const [detalle, setDetalle] = useState<FilaJugador | null>(null);
 
-  const visibles = (filtro == null ? resumen : resumen.filter((r) => r.id === filtro))
-    .map((r) => ({
-      ...r,
-      filas: ordenarFilas(
+  const esGeneral = filtro == null;
+
+  const visibles = (
+    esGeneral
+      ? [
+          {
+            id: -1,
+            nombre: "General",
+            foto: null,
+            filas: resumen.flatMap((r) =>
+              r.filas.map((f) => ({ ...f, miembro_id: r.id, miembro_nombre: r.nombre })),
+            ),
+            invertido: 0,
+            devuelto: 0,
+            rentabilidad: 0,
+            subida_hoy: 0,
+          } satisfies ResumenMiembro,
+        ]
+      : resumen.filter((r) => r.id === filtro)
+  )
+    .map((r) => {
+      const filas = ordenarFilas(
         soloPlantilla ? r.filas.filter((f) => f.en_plantilla) : r.filas,
-      ),
-    }))
+      );
+      const totales = filas.reduce(
+        (acc, f) => ({
+          invertido: acc.invertido + f.invertido,
+          devuelto: acc.devuelto + f.devuelto,
+        }),
+        { invertido: 0, devuelto: 0 },
+      );
+      const subidaHoy = filas
+        .filter((f) => f.en_plantilla)
+        .reduce((acc, f) => acc + (f.diferencia_diaria ?? 0), 0);
+      return {
+        ...r,
+        filas,
+        invertido: totales.invertido,
+        devuelto: totales.devuelto,
+        rentabilidad: totales.devuelto - totales.invertido,
+        subida_hoy: subidaHoy,
+      };
+    })
     .sort((a, b) => {
       const aPos = a.rentabilidad >= 0;
       const bPos = b.rentabilidad >= 0;
       if (aPos !== bPos) return aPos ? -1 : 1;
       return b.rentabilidad - a.rentabilidad;
     });
+
+  function formatValorCompacto(n: number): string {
+    const abs = Math.abs(n);
+    if (abs >= 1e9) return `${(n / 1e9).toFixed(1)} MM`;
+    if (abs >= 1e6) return `${(n / 1e6).toFixed(1)} M`;
+    if (abs >= 1e3) return `${(n / 1e3).toFixed(0)} k`;
+    return `${n}`;
+  }
+
+  const lineData =
+    serieRentabilidad && serieRentabilidad.amigos.length > 0
+      ? serieRentabilidad.fechas.map((f, i) => {
+          const row: Record<string, string | number | null> = { fecha: f };
+          for (const a of serieRentabilidad.amigos) row[a.nombre] = a.datos[i];
+          return row;
+        })
+      : [];
 
   const filaADetalle = (f: FilaJugador): CardJugador => ({
     id: f.jugador_id,
@@ -113,6 +198,13 @@ export function RentabilidadManager({
 
       {resumen.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant={esGeneral ? "default" : "outline"}
+            onClick={() => setFiltro(null)}
+          >
+            General
+          </Button>
           {resumen.map((r) => (
             <Button
               key={r.id}
@@ -136,7 +228,212 @@ export function RentabilidadManager({
         </div>
       )}
 
-      {visibles.length === 0 ? (
+      {esGeneral ? (
+        resumen.length === 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Sin datos</CardTitle>
+              <CardDescription>
+                No hay jugadores ni movimientos todavía en esta liga.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {lineData.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Evolución diaria del patrimonio</CardTitle>
+                  <CardDescription>
+                    Valoración del equipo más el dinero en mano de cada amigo día a
+                    día (últimas ~8 semanas).
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={lineData}
+                        margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="fecha" tick={{ fontSize: 11 }} minTickGap={28} />
+                        <YAxis
+                          domain={["auto", "auto"]}
+                          tickFormatter={(v) => formatValorCompacto(v as number)}
+                          width={64}
+                        />
+                        <Tooltip
+                          formatter={(value) => [formatValor(value as number), "Patrimonio"]}
+                        />
+                        <Legend />
+                        {serieRentabilidad!.amigos.map((a, i) => (
+                          <Line
+                            key={a.id}
+                            type="monotone"
+                            dataKey={a.nombre}
+                            dot={false}
+                            strokeWidth={2}
+                            stroke={COLORES_AMIGOS[i % COLORES_AMIGOS.length]}
+                          />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {resumen.map((m) => {
+              const filasG = soloPlantilla
+                ? m.filas.filter((f) => f.en_plantilla)
+                : m.filas;
+              const totalesG = filasG.reduce(
+                (acc, f) => ({
+                  invertido: acc.invertido + f.invertido,
+                  devuelto: acc.devuelto + f.devuelto,
+                }),
+                { invertido: 0, devuelto: 0 },
+              );
+              const subidaHoyG = filasG
+                .filter((f) => f.en_plantilla)
+                .reduce((acc, f) => acc + (f.diferencia_diaria ?? 0), 0);
+              const rentG = totalesG.devuelto - totalesG.invertido;
+              const ordenG = [...filasG].sort((a, b) => b.rentabilidad - a.rentabilidad);
+              const topG = ordenG[0] ?? null;
+              const peorG = ordenG[ordenG.length - 1] ?? null;
+              return (
+                <Card key={m.id}>
+                  <CardHeader className="flex flex-row items-center gap-3">
+                    <MiembroAvatar nombre={m.nombre} fotoUrl={m.foto} />
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="flex items-center gap-2">
+                        {m.nombre}
+                        <Badge variant="secondary">{filasG.length}</Badge>
+                      </CardTitle>
+                      <CardDescription>Resumen de la liga.</CardDescription>
+                    </div>
+                    <div className="ml-auto text-right">
+                      <div
+                        className={`text-xl font-bold tabular-nums ${
+                          rentG > 0
+                            ? "text-emerald-600"
+                            : rentG < 0
+                              ? "text-red-600"
+                              : ""
+                        }`}
+                      >
+                        {rentG > 0 ? "+" : ""}
+                        {formatValor(rentG)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {pctTexto(totalesG.invertido, rentG) ?? "—"}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                      <div>
+                        <div className="text-muted-foreground">Invertido</div>
+                        <div className="font-medium tabular-nums">
+                          {formatValor(totalesG.invertido)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Devuelto</div>
+                        <div className="font-medium tabular-nums">
+                          {formatValor(totalesG.devuelto)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Beneficio</div>
+                        <div
+                          className={`font-medium tabular-nums ${
+                            rentG > 0
+                              ? "text-emerald-600"
+                              : rentG < 0
+                                ? "text-red-600"
+                                : ""
+                          }`}
+                        >
+                          {rentG > 0 ? "+" : ""}
+                          {formatValor(rentG)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Subida de hoy</div>
+                        <div
+                          className={`font-medium tabular-nums ${
+                            subidaHoyG > 0
+                              ? "text-emerald-600"
+                              : subidaHoyG < 0
+                                ? "text-red-600"
+                                : ""
+                          }`}
+                        >
+                          {subidaHoyG > 0 ? "+" : ""}
+                          {formatValor(subidaHoyG)}
+                        </div>
+                      </div>
+                    </div>
+                    {filasG.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Este amigo todavía no tiene jugadores.
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-1 text-sm">
+                        {topG && (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-muted-foreground">Top beneficio</span>
+                            <span className="flex min-w-0 items-center gap-1.5">
+                              {topG.foto ? (
+                                <img
+                                  src={topG.foto}
+                                  alt=""
+                                  className="size-5 rounded object-cover"
+                                />
+                              ) : null}
+                              <span className="truncate font-medium">{topG.nombre}</span>
+                              <span className="font-semibold tabular-nums text-emerald-600">
+                                +{formatValor(topG.rentabilidad)}
+                              </span>
+                            </span>
+                          </div>
+                        )}
+                        {peorG && peorG !== topG && (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-muted-foreground">Menos beneficio</span>
+                            <span className="flex min-w-0 items-center gap-1.5">
+                              {peorG.foto ? (
+                                <img
+                                  src={peorG.foto}
+                                  alt=""
+                                  className="size-5 rounded object-cover"
+                                />
+                              ) : null}
+                              <span className="truncate font-medium">{peorG.nombre}</span>
+                              <span
+                                className={`font-semibold tabular-nums ${
+                                  peorG.rentabilidad < 0 ? "text-red-600" : "text-emerald-600"
+                                }`}
+                              >
+                                {peorG.rentabilidad > 0 ? "+" : ""}
+                                {formatValor(peorG.rentabilidad)}
+                              </span>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+            </div>
+          </div>
+        )
+      ) : visibles.length === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Sin datos</CardTitle>
@@ -146,16 +443,22 @@ export function RentabilidadManager({
           </CardHeader>
         </Card>
       ) : (
-        visibles.map((r) => (
+        visibles.map((r) => {
+          const esGeneral = r.id === -1;
+          return (
           <Card key={r.id}>
             <CardHeader className="flex flex-row items-center gap-3">
-              <MiembroAvatar nombre={r.nombre} fotoUrl={r.foto} />
+              {!esGeneral && <MiembroAvatar nombre={r.nombre} fotoUrl={r.foto} />}
               <div className="min-w-0 flex-1">
                 <CardTitle className="flex items-center gap-2">
                   {r.nombre}
                   <Badge variant="secondary">{r.filas.length}</Badge>
                 </CardTitle>
-                <CardDescription>Rentabilidad total de sus jugadores.</CardDescription>
+                <CardDescription>
+                  {esGeneral
+                    ? "Estado de todos los jugadores de la liga a la vez."
+                    : "Rentabilidad total de sus jugadores."}
+                </CardDescription>
               </div>
               <div className="ml-auto text-right">
                 <div
@@ -223,6 +526,7 @@ export function RentabilidadManager({
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      {esGeneral && <TableHead>Amigo</TableHead>}
                       <TableHead>Jugador</TableHead>
                       <TableHead className="text-right">Hoy</TableHead>
                       <TableHead className="text-right">Fichaje</TableHead>
@@ -239,6 +543,11 @@ export function RentabilidadManager({
                       const pct = pctTexto(f.invertido, f.rentabilidad);
                       return (
                         <TableRow key={f.jugador_id}>
+                          {esGeneral && (
+                            <TableCell className="text-muted-foreground">
+                              {f.miembro_nombre}
+                            </TableCell>
+                          )}
                           <TableCell>
                             <div
                               role="button"
@@ -362,7 +671,8 @@ export function RentabilidadManager({
               )}
             </CardContent>
           </Card>
-        ))
+          );
+        })
       )}
 
       {detalle != null && (
