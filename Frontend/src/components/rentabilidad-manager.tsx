@@ -133,7 +133,7 @@ export function RentabilidadManager({
       const filas = ordenarFilas(
         soloPlantilla ? r.filas.filter((f) => f.en_plantilla) : r.filas,
       );
-      const totales = filas.reduce(
+      const totales = r.filas.reduce(
         (acc, f) => ({
           invertido: acc.invertido + f.invertido,
           devuelto: acc.devuelto + f.devuelto,
@@ -295,7 +295,7 @@ export function RentabilidadManager({
               const filasG = soloPlantilla
                 ? m.filas.filter((f) => f.en_plantilla)
                 : m.filas;
-              const totalesG = filasG.reduce(
+              const totalesG = m.filas.reduce(
                 (acc, f) => ({
                   invertido: acc.invertido + f.invertido,
                   devuelto: acc.devuelto + f.devuelto,
