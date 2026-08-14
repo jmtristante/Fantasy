@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -105,6 +107,7 @@ export function RentabilidadManager({
   const [filtro, setFiltro] = useState<number | null>(null);
   const [soloPlantilla, setSoloPlantilla] = useState(true);
   const [detalle, setDetalle] = useState<FilaJugador | null>(null);
+  const [busqueda, setBusqueda] = useState("");
 
   const esGeneral = filtro == null;
 
@@ -264,7 +267,10 @@ export function RentabilidadManager({
                           width={64}
                         />
                         <Tooltip
-                          formatter={(value) => [formatValor(value as number), "Patrimonio"]}
+                          formatter={(value, name) => [
+                            formatValor(value as number),
+                            (name as string) ?? "",
+                          ]}
                         />
                         <Legend />
                         {serieRentabilidad!.amigos.map((a, i) => (
@@ -445,6 +451,12 @@ export function RentabilidadManager({
       ) : (
         visibles.map((r) => {
           const esGeneral = r.id === -1;
+          const termino = busqueda.trim().toLowerCase();
+          const filasFiltradas = termino
+            ? r.filas.filter((f) =>
+                (f.nombre as string).toLowerCase().includes(termino),
+              )
+            : r.filas;
           return (
           <Card key={r.id}>
             <CardHeader className="flex flex-row items-center gap-3">
@@ -516,14 +528,28 @@ export function RentabilidadManager({
                     {formatValor(r.subida_hoy)}
                   </b>
                 </span>
-              </div>
+                </div>
 
-              {r.filas.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Este amigo todavía no tiene jugadores.
-                </p>
-              ) : (
-                <Table>
+                <div className="relative mb-3">
+                  <Input
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    placeholder="Buscar jugador…"
+                    className="pl-8"
+                  />
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                </div>
+
+                {r.filas.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Este amigo todavía no tiene jugadores.
+                  </p>
+                ) : filasFiltradas.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Ningún jugador coincide con “{busqueda}”.
+                  </p>
+                ) : (
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       {esGeneral && <TableHead>Amigo</TableHead>}
@@ -539,7 +565,7 @@ export function RentabilidadManager({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {r.filas.map((f) => {
+                    {filasFiltradas.map((f) => {
                       const pct = pctTexto(f.invertido, f.rentabilidad);
                       return (
                         <TableRow key={f.jugador_id}>

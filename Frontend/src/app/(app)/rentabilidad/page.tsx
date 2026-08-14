@@ -39,8 +39,14 @@ export default async function RentabilidadPage() {
     );
   }
 
-  const [{ data: miembros }, { data: movimientos }, { data: drafts }, { data: plantillas }, { data: precios }] =
-    await Promise.all([
+  const [
+    { data: miembros },
+    { data: movimientos },
+    { data: drafts },
+    { data: plantillas },
+    { data: precios },
+    { data: ligaInfo },
+  ] = await Promise.all([
       supabase
         .schema("liga")
         .from("miembros")
@@ -66,6 +72,12 @@ export default async function RentabilidadPage() {
       supabase
         .from("v_precio_actual")
         .select("jugador_id, valor, diferencia, diferencia_pct, tendencia, aceleracion_estado"),
+      supabase
+        .schema("liga")
+        .from("ligas")
+        .select("creado")
+        .eq("id", ligaId)
+        .single(),
     ]);
 
   const valorPorJugador = new Map(
@@ -257,9 +269,11 @@ export default async function RentabilidadPage() {
   // Serie historica: patrimonio de cada amigo dia a dia = valoracion de su
   // equipo (suma del valor de mercado de los jugadores que tiene ese dia) mas
   // el dinero en mano (presupuesto inicial + movimientos acumulados hasta el dia).
+  // El eje X arranca en la fecha de creacion de la liga.
   const VENTANA_DIAS = 56;
-  const inicioISO = new Date(
-    Date.now() - VENTANA_DIAS * 24 * 60 * 60 * 1000,
+  const creado = ligaInfo?.creado ? new Date(ligaInfo.creado as string) : null;
+  const inicioISO = (
+    creado ?? new Date(Date.now() - VENTANA_DIAS * 24 * 60 * 60 * 1000)
   ).toISOString();
   const toDayStart = (f: string | Date) => {
     const d = new Date(f);
@@ -322,24 +336,19 @@ export default async function RentabilidadPage() {
     amigos: { id: number; nombre: string; datos: (number | null)[] }[];
   } = { fechas: [], amigos: [] };
   if (jugadorIds.length > 0) {
-    const { data: preciosDiarios } = await supabase
-      .from("precios_diarios")
-      .select("jugador_id, fecha, valor")
-      .in("jugador_id", jugadorIds)
-      .gte("fecha", inicioISO)
-      .order("fecha");
+      const { data: preciosDiarios } = await supabase
+        .from("precios_diarios")
+        .select("jugador_id, fecha, valor")
+        .in("jugador_id", jugadorIds)
+        .gte("fecha", inicioISO)
+        .order("fecha")
+        .range(0, 100000);
     const preciosPorDia = new Map<string, Map<number, number>>();
-    const diasArr: { ts: number; label: string }[] = [];
-    const vistos = new Set<string>();
     for (const pd of preciosDiarios ?? []) {
       const d = new Date(pd.fecha as string);
       const label = `${d.getDate().toString().padStart(2, "0")}/${(
         d.getMonth() + 1
       ).toString().padStart(2, "0")}`;
-      if (!vistos.has(label)) {
-        vistos.add(label);
-        diasArr.push({ ts: toDayStart(d), label });
-      }
       let m = preciosPorDia.get(label);
       if (!m) {
         m = new Map();
@@ -351,10 +360,20 @@ export default async function RentabilidadPage() {
     const hoyLabel = `${hoy.getDate().toString().padStart(2, "0")}/${(
       hoy.getMonth() + 1
     ).toString().padStart(2, "0")}`;
-    if (diasArr.length === 0 || diasArr[diasArr.length - 1].label !== hoyLabel) {
-      diasArr.push({ ts: toDayStart(hoy), label: hoyLabel });
+    // Eje X continuo desde la fecha de creacion de la liga hasta hoy.
+    const diasArr: { ts: number; label: string }[] = [];
+    const inicioDia = toDayStart(inicioISO);
+    const finDia = toDayStart(hoy);
+    for (let t = inicioDia; t <= finDia; t += 24 * 60 * 60 * 1000) {
+      const d = new Date(t);
+      const label = `${d.getDate().toString().padStart(2, "0")}/${(
+        d.getMonth() + 1
+      ).toString().padStart(2, "0")}`;
+      diasArr.push({ ts: t, label });
     }
-    diasArr.sort((a, b) => a.ts - b.ts);
+    if (diasArr.length === 0) {
+      diasArr.push({ ts: finDia, label: hoyLabel });
+    }
     const fechas = diasArr.map((x) => x.label);
     serieRentabilidad = {
       fechas,

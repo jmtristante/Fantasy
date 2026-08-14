@@ -142,3 +142,17 @@
     letter-spacing: 0.01em;
   }
 }
+
+/* Tooltip de recharts: el fondo se adapta al tema (modo oscuro incluido).
+   No sobreescribimos el color de cada item: recharts pinta el nombre y el
+   valor de cada amigo con su color de serie (entry.color), y queremos
+   mantenerlo. Solo corregimos el fondo y la cabecera (fecha). */
+.recharts-default-tooltip {
+  background-color: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+}
+.recharts-default-tooltip .recharts-tooltip-label {
+  color: var(--popover-foreground) !important;
+}
