@@ -156,16 +156,6 @@ def cmd_sync(conn, args):
             sync_db.sync_jornadas(cur, jornadas)
             sync_db.sync_partidos(cur, partidos, SEASON_LABEL)
 
-    if "mercado" in selected:
-        precios = mercado.scrape(refresh=args.refresh)
-        print(f"Mercado {COMPETICION}-fantasy: {len(precios)} precios")
-        # El mercado solo aporta precios (se escriben al final). Los jugadores
-        # (y su detalle) se crean y actualizan exclusivamente con el scraper de
-        # equipos, para que un scrape de mercado nunca pise ni vacíe los datos.
-        # Nota: como precios_diarios.jugador_id tiene FK a jugadores, si un jugador
-        # del mercado aún no existe (recién fichado sin scrapear su equipo) su
-        # precio fallaría el INSERT y abortaría el sync de mercado.
-
     if "equipos" in selected:
         if not equipos:
             equipos, _ = clasificacion.scrape(refresh=args.refresh)
@@ -188,8 +178,19 @@ def cmd_sync(conn, args):
             sync_db.sync_alineaciones(conn.cursor(), alineaciones)
             print(f"Alineaciones: {len(alineaciones)}")
 
-    # Los precios del mercado (oficial, con tendencia/aceleracion) se escriben al
-    # final para no ser pisados por los del scraper de equipos.
+    # El mercado se scrapea DESPUES de equipos: asi su marca de tiempo (la del
+    # final del sync) es posterior a la de los precios de equipos, y como
+    # v_precio_actual devuelve la fila con MAX(fecha) por jugador, la tendencia
+    # real del mercado no queda oculta por las filas de equipos (que no la traen).
+    if "mercado" in selected:
+        precios = mercado.scrape(refresh=args.refresh)
+        print(f"Mercado {COMPETICION}-fantasy: {len(precios)} precios")
+        # El mercado solo aporta precios (se escriben a continuacion). Los jugadores
+        # (y su detalle) se crean y actualizan exclusivamente con el scraper de
+        # equipos, para que un scrape de mercado nunca pise ni vacie los datos.
+
+    # Los precios del mercado (oficial, con tendencia/aceleracion) se escriben
+    # despues de los de equipos para no ser pisados por ellos.
     if conn is not None and precios:
         _procesa_mercado(conn, precios, refresh=args.refresh)
 
