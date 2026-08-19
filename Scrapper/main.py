@@ -166,16 +166,16 @@ def cmd_sync(conn, args):
             equipos = filtrados
         resultados = equipos_mod.scrape_all(equipos, refresh=args.refresh)
         total_jugadores = sum(len(r["jugadores"]) for r in resultados)
-        total_precios = sum(len(_precios_multi_juego(r["jugadores"])) for r in resultados)
         alineaciones = []
         for r in resultados:
             if conn is not None:
                 cur = conn.cursor()
                 sync_db.sync_equipos(cur, [r["equipo"]], SEASON_LABEL)
                 sync_db.sync_jugadores(cur, r["jugadores"])
-                sync_db.sync_precios(cur, _precios_multi_juego(r["jugadores"]))
+                # NO sync_precios: los precios con tendencia/aceleracion vienen
+                # del mercado y se insertan despues.
                 alineaciones.extend(r["alineaciones"])
-        print(f"Equipos: {len(resultados)} · Jugadores: {total_jugadores} · Precios multi-juego: {total_precios}")
+        print(f"Equipos: {len(resultados)} · Jugadores: {total_jugadores}")
         if conn is not None and alineaciones:
             sync_db.sync_alineaciones(conn.cursor(), alineaciones)
             print(f"Alineaciones: {len(alineaciones)}")
