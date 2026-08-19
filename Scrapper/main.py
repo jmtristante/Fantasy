@@ -76,6 +76,9 @@ def _procesa_mercado(conn, precios, refresh=False):
     Si algún jugador del mercado aún no tiene ficha en `jugadores`, se scrapean
     sus equipos con el scraper de equipos para crearlo/actualizarlo antes de
     escribir los precios. Los que sigan sin resolverse se omiten con un aviso.
+
+    NOTA: solo inserta precios para jugadores NUEVOS (sin ficha). Los que ya
+    existen mantienen sus precios del mercado (con tendencia/aceleracion).
     """
     ids = {p["jugador_id"] for p in precios if p.get("jugador_id")}
     existentes = _ids_jugadores_existentes(conn, ids)
@@ -88,10 +91,11 @@ def _procesa_mercado(conn, precios, refresh=False):
         equipos, _ = clasificacion.scrape(refresh=refresh)
         if equipos:
             for r in equipos_mod.scrape_all(equipos, refresh=refresh):
+                # Solo sincronizar equipos/jugadores, NO precios (para no pisar
+                # los del mercado que ya tienen tendencia/aceleracion).
                 cur = conn.cursor()
                 sync_db.sync_equipos(cur, [r["equipo"]], SEASON_LABEL)
                 sync_db.sync_jugadores(cur, r["jugadores"])
-                sync_db.sync_precios(cur, _precios_multi_juego(r["jugadores"]))
         else:
             print("  Aviso: no se obtuvieron equipos para resolver el FK.")
 
