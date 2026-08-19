@@ -91,7 +91,9 @@ def _procesa_mercado(conn, precios, refresh=False):
                 cur = conn.cursor()
                 sync_db.sync_equipos(cur, [r["equipo"]], SEASON_LABEL)
                 sync_db.sync_jugadores(cur, r["jugadores"])
-                sync_db.sync_precios(cur, _precios_multi_juego(r["jugadores"]))
+                # NO sync_precios aqui: solo creamos las fichas de jugadores
+                # nuevos. Los precios (con tendencia/aceleracion) vienen del
+                # mercado y se insertan despues en validos.
         else:
             print("  Aviso: no se obtuvieron equipos para resolver el FK.")
 
